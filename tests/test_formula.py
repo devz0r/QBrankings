@@ -67,12 +67,31 @@ def test_fumble_recovery_luck_is_removed():
     assert x.adj_yds.iloc[0] == pytest.approx(x.adj_yds.iloc[1])
 
 
-def test_receiver_keeps_quarter_of_yac_over_expected():
+def test_yac_over_expected_share_applies_to_both_halves():
     rows = [play(play_id=1, epa=4.0, qb_epa=4.0, yac_epa=3.5, xyac_epa=0.5, passing_yards=60.0,
                  yards_after_catch=55.0, xyac_mean_yardage=5.0)]
     x = F.select_plays(frame(rows), {'A'})
-    assert x.pts.iloc[0] == pytest.approx(4.0 - 0.25 * 3.0)
-    assert x.adj_yds.iloc[0] == pytest.approx(60.0 - 0.25 * 50.0)
+    assert x.pts.iloc[0] == pytest.approx(4.0 - F.YAC_RECEIVER_SHARE * 3.0)
+    assert x.adj_yds.iloc[0] == pytest.approx(60.0 - F.YAC_RECEIVER_SHARE * 50.0)
+
+
+def test_third_and_long_deep_interception_costs_no_yards():
+    base = dict(complete_pass=0, interception=1, passing_yards=np.nan, yards_after_catch=np.nan,
+                xyac_mean_yardage=np.nan, yac_epa=np.nan, xyac_epa=np.nan, epa=-1.5, qb_epa=-1.5)
+    punt = play(play_id=1, down=3, ydstogo=14, air_yards=35.0, **base)
+    early = play(play_id=2, down=1, ydstogo=10, air_yards=35.0, **base)
+    x = F.select_plays(frame([punt, early]), {'A'})
+    assert x.adj_yds.iloc[0] == pytest.approx(0.0 if F.ARM_PUNT_FREE else -45.0)
+    assert x.adj_yds.iloc[1] == pytest.approx(-45.0)
+
+
+def test_run_heavy_gadget_qb_is_not_divided_by_a_handful_of_dropbacks():
+    run = dict(play_type='run', **{'pass': 0}, rush=1, qb_dropback=0, pass_attempt=0, complete_pass=0,
+               passing_yards=np.nan, rushing_yards=7.0, yards_gained=7.0, epa=0.4, qb_epa=0.4,
+               yac_epa=np.nan, xyac_epa=np.nan)
+    r, _, _ = F.rate_season(F.select_plays(_league([run] * 60), {'A', 'B', 'C'}))
+    floor = F.MIN_DENOM_SHARE * r.loc['A', 'plays']
+    assert r.loc['A', 'per_dropback'] == pytest.approx(r.loc['A', 'total'] / (floor + F.QB_PRIOR_DROPBACKS))
 
 
 def test_end_of_half_heave_interception_costs_no_yards():

@@ -7,9 +7,9 @@
   {
    "key": "cqr",
    "label": "CQR",
-   "split_half": 0.493,
-   "year_to_year": 0.363,
-   "win_pct": 0.718
+   "split_half": 0.494,
+   "year_to_year": 0.377,
+   "win_pct": 0.711
   },
   {
    "key": "rating",
@@ -47,13 +47,13 @@
     "season": 2020,
     "better_box": "Mitchell Trubisky",
     "ranked_higher": "Joe Burrow",
-    "gap": 9.2
+    "gap": 4.4
    },
    {
     "season": 2021,
     "better_box": "Kirk Cousins",
     "ranked_higher": "Jimmy Garoppolo",
-    "gap": 4.4
+    "gap": 7.2
    }
   ]
  },
@@ -64,27 +64,27 @@
     {
      "name": "Matt Ryan",
      "team": "ATL",
-     "cqr": 92.9
+     "cqr": 94.5
     },
     {
      "name": "Tom Brady",
      "team": "NE",
-     "cqr": 91.8
+     "cqr": 92.8
     },
     {
      "name": "Dak Prescott",
      "team": "DAL",
-     "cqr": 88.6
+     "cqr": 88.7
     },
     {
      "name": "Aaron Rodgers",
      "team": "GB",
-     "cqr": 83.6
+     "cqr": 83.5
     },
     {
      "name": "Kirk Cousins",
      "team": "WAS",
-     "cqr": 80.8
+     "cqr": 81.9
     }
    ],
    "mvp": "Matt Ryan",
@@ -94,29 +94,29 @@
    "season": 2017,
    "top": [
     {
-     "name": "Carson Wentz",
-     "team": "PHI",
-     "cqr": 87.6
+     "name": "Drew Brees",
+     "team": "NO",
+     "cqr": 87.2
     },
     {
      "name": "Tom Brady",
      "team": "NE",
-     "cqr": 86.0
+     "cqr": 86.2
     },
     {
-     "name": "Drew Brees",
-     "team": "NO",
-     "cqr": 85.4
-    },
-    {
-     "name": "Alex Smith",
-     "team": "KC",
-     "cqr": 84.4
+     "name": "Jared Goff",
+     "team": "LA",
+     "cqr": 86.2
     },
     {
      "name": "Deshaun Watson",
      "team": "HOU",
-     "cqr": 84.4
+     "cqr": 86.1
+    },
+    {
+     "name": "Carson Wentz",
+     "team": "PHI",
+     "cqr": 86.0
     }
    ],
    "mvp": "Tom Brady",
@@ -128,27 +128,27 @@
     {
      "name": "Patrick Mahomes",
      "team": "KC",
-     "cqr": 94.3
+     "cqr": 95.3
     },
     {
      "name": "Drew Brees",
      "team": "NO",
-     "cqr": 92.6
+     "cqr": 92.3
     },
     {
      "name": "Philip Rivers",
      "team": "LAC",
-     "cqr": 84.2
+     "cqr": 85.7
     },
     {
      "name": "Jared Goff",
      "team": "LA",
-     "cqr": 79.3
+     "cqr": 81.3
     },
     {
-     "name": "Matt Ryan",
-     "team": "ATL",
-     "cqr": 79.2
+     "name": "Tom Brady",
+     "team": "NE",
+     "cqr": 80.2
     }
    ],
    "mvp": "Patrick Mahomes",
@@ -160,27 +160,27 @@
     {
      "name": "Lamar Jackson",
      "team": "BAL",
-     "cqr": 97.0
+     "cqr": 96.8
     },
     {
      "name": "Patrick Mahomes",
      "team": "KC",
-     "cqr": 92.3
+     "cqr": 92.8
     },
     {
      "name": "Drew Brees",
      "team": "NO",
-     "cqr": 89.5
+     "cqr": 91.0
     },
     {
      "name": "Ryan Tannehill",
      "team": "TEN",
-     "cqr": 88.4
+     "cqr": 90.9
     },
     {
      "name": "Dak Prescott",
      "team": "DAL",
-     "cqr": 88.2
+     "cqr": 88.9
     }
    ],
    "mvp": "Lamar Jackson",
@@ -192,27 +192,27 @@
     {
      "name": "Aaron Rodgers",
      "team": "GB",
-     "cqr": 91.7
+     "cqr": 92.6
     },
     {
      "name": "Patrick Mahomes",
      "team": "KC",
-     "cqr": 89.9
+     "cqr": 90.9
     },
     {
      "name": "Josh Allen",
      "team": "BUF",
-     "cqr": 88.1
+     "cqr": 87.2
     },
     {
      "name": "Ryan Tannehill",
      "team": "TEN",
-     "cqr": 85.1
+     "cqr": 85.6
     },
     {
      "name": "Deshaun Watson",
      "team": "HOU",
-     "cqr": 81.0
+     "cqr": 83.2
     }
    ],
    "mvp": "Aaron Rodgers",
@@ -224,27 +224,27 @@
     {
      "name": "Aaron Rodgers",
      "team": "GB",
-     "cqr": 88.5
+     "cqr": 89.7
     },
     {
      "name": "Tom Brady",
      "team": "TB",
-     "cqr": 86.7
-    },
-    {
-     "name": "Patrick Mahomes",
-     "team": "KC",
-     "cqr": 81.3
+     "cqr": 87.1
     },
     {
      "name": "Matthew Stafford",
      "team": "LA",
-     "cqr": 80.9
+     "cqr": 82.4
+    },
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 81.8
     },
     {
      "name": "Justin Herbert",
      "team": "LAC",
-     "cqr": 80.0
+     "cqr": 81.5
     }
    ],
    "mvp": "Aaron Rodgers",
@@ -256,27 +256,27 @@
     {
      "name": "Patrick Mahomes",
      "team": "KC",
-     "cqr": 92.0
+     "cqr": 93.1
     },
     {
      "name": "Tua Tagovailoa",
      "team": "MIA",
-     "cqr": 88.7
+     "cqr": 89.8
     },
     {
      "name": "Jalen Hurts",
      "team": "PHI",
-     "cqr": 86.4
-    },
-    {
-     "name": "Josh Allen",
-     "team": "BUF",
-     "cqr": 84.8
+     "cqr": 86.3
     },
     {
      "name": "Jimmy Garoppolo",
      "team": "SF",
-     "cqr": 80.5
+     "cqr": 83.6
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 83.3
     }
    ],
    "mvp": "Patrick Mahomes",
@@ -288,31 +288,31 @@
     {
      "name": "Brock Purdy",
      "team": "SF",
-     "cqr": 94.3
+     "cqr": 95.6
     },
     {
      "name": "Dak Prescott",
      "team": "DAL",
-     "cqr": 87.0
+     "cqr": 85.7
     },
     {
      "name": "Josh Allen",
      "team": "BUF",
-     "cqr": 85.9
+     "cqr": 85.1
     },
     {
      "name": "Tua Tagovailoa",
      "team": "MIA",
-     "cqr": 81.5
+     "cqr": 82.6
     },
     {
-     "name": "Lamar Jackson",
-     "team": "BAL",
-     "cqr": 79.6
+     "name": "Jared Goff",
+     "team": "DET",
+     "cqr": 81.7
     }
    ],
    "mvp": "Lamar Jackson",
-   "mvp_rank": 5
+   "mvp_rank": 6
   },
   {
    "season": 2024,
@@ -320,27 +320,27 @@
     {
      "name": "Lamar Jackson",
      "team": "BAL",
-     "cqr": 96.2
+     "cqr": 97.2
     },
     {
      "name": "Josh Allen",
      "team": "BUF",
-     "cqr": 92.0
+     "cqr": 92.6
     },
     {
      "name": "Jared Goff",
      "team": "DET",
-     "cqr": 86.7
+     "cqr": 88.5
     },
     {
      "name": "Jordan Love",
      "team": "GB",
-     "cqr": 80.2
+     "cqr": 82.5
     },
     {
      "name": "Joe Burrow",
      "team": "CIN",
-     "cqr": 79.1
+     "cqr": 78.0
     }
    ],
    "mvp": "Josh Allen",
@@ -350,29 +350,29 @@
    "season": 2025,
    "top": [
     {
-     "name": "Drake Maye",
-     "team": "NE",
-     "cqr": 90.2
-    },
-    {
      "name": "Matthew Stafford",
      "team": "LA",
-     "cqr": 89.3
+     "cqr": 90.8
+    },
+    {
+     "name": "Drake Maye",
+     "team": "NE",
+     "cqr": 90.1
     },
     {
      "name": "Jordan Love",
      "team": "GB",
-     "cqr": 84.9
-    },
-    {
-     "name": "Brock Purdy",
-     "team": "SF",
-     "cqr": 82.5
+     "cqr": 82.8
     },
     {
      "name": "Josh Allen",
      "team": "BUF",
-     "cqr": 81.0
+     "cqr": 82.4
+    },
+    {
+     "name": "Jared Goff",
+     "team": "DET",
+     "cqr": 80.7
     }
    ],
    "mvp": null,

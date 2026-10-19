@@ -20,6 +20,7 @@ from .data import load_pbp, load_roster
 from .stats import box
 
 FIRST_SEASON = 2016
+MIN_DROPBACK_SHARE = 0.5
 SITE_DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'site', 'data')
 
 
@@ -153,7 +154,8 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
 
     qbs = []
     for qb, row in r.sort_values('cqr', ascending=False).iterrows():
-        if row.plays < 10:
+        # QB rankings are for quarterbacks by usage: skip gadget players who mostly run (e.g. Taysom Hill)
+        if row.plays < 10 or row.dropbacks < MIN_DROPBACK_SHARE * row.plays:
             continue
         games = int(row.games)
         teams = list(dict.fromkeys(q.loc[q.qb == qb].sort_values('week').posteam))

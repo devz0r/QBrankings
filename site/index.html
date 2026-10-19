@@ -80,29 +80,31 @@
     <div class="section-head">
       <p class="eyebrow">How it works</p>
       <h2 id="formula-title">The formula</h2>
-      <p>CQR grades every snap a quarterback is responsible for, in two currencies: expected points (what the play did to the team's scoring chances given down, distance and field position) and adjusted yards (the box score, done right). It then removes what the quarterback doesn't control and puts the result on a 0-100 scale.</p>
+      <p>CQR grades every snap a quarterback is responsible for, in two currencies: expected points (what the play did to the team's scoring chances given down, distance and field position) and adjusted yards (the box score, done right). It then strips out the things most clearly outside the quarterback's hands and puts the result on a 0-100 scale. What's left is opponent-adjusted quarterback production: pass protection, receivers and play-calling still show up in it, as they do in every public QB stat.</p>
     </div>
     <div class="cols">
       <div class="stack">
 <pre class="formula" aria-label="CQR formula"><span class="cm">// 1. value every QB play against an average play of its kind</span>
-A  = ½ × (<span class="hl">EPA*</span> − avg) + ½ × (<span class="hl">AY</span> − avg) ÷ 9
+A  = ⅓ × (<span class="hl">EPA*</span> − avg) + ⅔ × (<span class="hl">AY</span> − avg) ÷ 9
 
-<span class="hl">EPA*</span> = EPA − ¼ × receiver's YAC beyond expected
+<span class="hl">EPA*</span> = EPA
      + 4 × (lost − p)     <span class="cm">on the QB's own fumbles</span>
      × ½                  <span class="cm">on pass interference drawn</span>
 
 <span class="hl">AY</span>   = pass yds + rush yds − sack yds
-     − ¼ × YAC beyond expected
      + 20 × TD − 45 × INT − 45 × p per fumble
+     <span class="cm">(no INT charge on end-of-half heaves or</span>
+     <span class="cm"> 3rd/4th-and-10+ throws of 20+ air yards)</span>
 
 <span class="cm">// avg: league average for a dropback, or for an NFL run</span>
 <span class="cm">//      in the same situation (short yardage or not)</span>
 <span class="cm">// p:   how often that kind of fumble is lost league-wide</span>
 
 <span class="cm">// 2. weight crunch time, adjust for defenses, add a cushion</span>
-      Σ w×A − Σ w×D
-V  = ───────────────     w = 1.25 in 4th qtr / OT within 8
-      dropbacks + 100    D = rating of the defense faced
+              Σ w×A − Σ w×D
+V  = ──────────────────────────────    w = 1.25 in 4th qtr / OT
+     max(dropbacks, ¾ × plays) + 100        within 8, else 1
+                                       D = defense faced
 
 <span class="cm">// 3. 0-100 scale, 50 = league average</span>
 CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
@@ -110,14 +112,14 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
           <h3>The constants</h3>
           <table class="consts">
             <tbody>
-              <tr><td>Weight on expected points vs. adjusted yards</td><td>50 / 50</td></tr>
+              <tr><td>Weight on expected points vs. adjusted yards</td><td>⅓ / ⅔</td></tr>
               <tr><td>Adjusted yards per point</td><td>9</td></tr>
               <tr><td>Touchdown bonus / interception cost (yards)</td><td>+20 / −45</td></tr>
-              <tr><td>Receiver's share of YAC beyond expected</td><td>25%</td></tr>
               <tr><td>Defensive pass interference drawn</td><td>50%</td></tr>
               <tr><td>Fumble lost rate: strip-sack / run / snap / other</td><td>52 / 41 / 26 / 19%</td></tr>
               <tr><td>Late &amp; close weight (4th qtr or OT, within 8)</td><td>1.25×</td></tr>
               <tr><td>Cushion of league-average dropbacks</td><td>100</td></tr>
+              <tr><td>Denominator floor (share of all plays)</td><td>75%</td></tr>
               <tr><td>Defense regression (dropbacks)</td><td>800</td></tr>
               <tr><td>Scale constant</td><td>0.085</td></tr>
               <tr><td>Qualify: dropbacks per team game</td><td>14</td></tr>
@@ -127,12 +129,12 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
       </div>
       <ol class="steps">
         <li><h3>Count every play the QB owns</h3><p>Passes, sacks, scrambles, botched snaps, designed runs, sneaks, two-point tries and drawn pass interference. Kneel-downs and spikes are ignored, and so are plays wiped out by a teammate's penalty.</p></li>
-        <li><h3>Value it in points and in yards</h3><p>Expected points know that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12. Adjusted yards know what the box score knows. Each catches the other's blind spots, so CQR averages them. Nine adjusted yards count as one point.</p></li>
-        <li><h3>Take out what the QB doesn't control</h3><p>Receivers keep a quarter of the yards they gain after the catch beyond what a normal receiver would. Fumbles are charged at their average cost, because who falls on the ball is luck. Drawn pass interference counts half.</p></li>
-        <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting the passing rate. That is how CQR counts dual threats.</p></li>
+        <li><h3>Value it in points and in yards</h3><p>Expected points know that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12. Adjusted yards know what the box score knows. Each catches the other's blind spots, so CQR blends them: one third points, two thirds yards, the mix that tested best on 2016-2020. Nine adjusted yards count as one point.</p></li>
+        <li><h3>Take out what clearly isn't the QB's doing</h3><p>Fumbles are charged at their average cost, because who falls on the ball is luck. Drawn pass interference counts half, teammates' penalties are ignored, and a deep interception on 3rd-and-long, which works like a punt, only costs what expected points say it cost. Protection, drops and play design can't be separated cleanly with public data, so they remain part of the rating.</p></li>
+        <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting the passing rate. That is how CQR counts dual threats. To keep it fair, the denominator never drops below three quarters of all the QB's plays, and players who mostly run (gadget QBs) aren't listed.</p></li>
         <li><h3>Weight crunch time a little</h3><p>Plays in the 4th quarter or overtime of a one-score game count 1.25 times. Clutch play matters, but not so much that a handful of snaps decide a season.</p></li>
         <li><h3>Adjust for the defenses faced</h3><p>Each defense is rated by what it allows to other teams' quarterbacks, regressed heavily toward average early in the year, and the QB is credited or charged for the defenses on the schedule.</p></li>
-        <li><h3>Make it earn the sample</h3><p>Every QB starts with 100 dropbacks of league-average play. One hot game can't vault a backup to No. 1, and by midseason the cushion barely matters. Then the per-dropback value goes on a 0-100 curve where 50 is league average and 90-plus is an MVP-level season.</p></li>
+        <li><h3>Make it earn the sample</h3><p>Every QB starts with 100 dropbacks of league-average play. One hot game can't vault a backup to No. 1. The cushion still matters: at 300 dropbacks it pulls a rating 25% of the way toward average, and about 14% by the end of a full season. Then the per-dropback value goes on a 0-100 curve where 50 is league average and 90-plus is an MVP-level season.</p></li>
       </ol>
     </div>
   </section>
@@ -141,7 +143,7 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
     <div class="section-head">
       <p class="eyebrow">Does it pass the eye test?</p>
       <h2 id="track-title">Track record, 2016 to 2025</h2>
-      <p>The formula was built on ten past seasons and checked three ways: whether it agrees with seasons everyone remembers, whether it ever puts a clearly worse stat line ahead of a clearly better one, and whether it measures something stable about the quarterback rather than noise.</p>
+      <p>Checked three ways: whether it agrees with seasons everyone remembers, whether it ever puts a clearly worse stat line ahead of a clearly better one, and, on seasons the formula never saw while it was being tuned, whether it measures something stable about the quarterback rather than noise.</p>
     </div>
     <div class="cols">
       <div class="card">
@@ -155,9 +157,10 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
           <p id="sanity-hist"></p>
         </div>
         <div class="card">
-          <h3>Against other QB ratings</h3>
-          <p>Higher is better in every column. Split-half: rating from odd weeks vs. even weeks of the same season. Year to year: one season vs. the next. Wins: correlation with the team's win rate in the QB's starts.</p>
+          <h3>Against other QB ratings, on unseen seasons</h3>
+          <p>CQR's weights were chosen using 2016-2020 only, then frozen and scored on 2021-2025. Higher is better. Split-half: odd weeks vs. even weeks of the same season. Year to year: one season vs. the next. Wins: correlation with the team's win rate in the QB's starts. ▲ means CQR is ahead with 95% confidence, ▼ behind, = too close to call.</p>
           <div class="table-scroll"><table class="bench" id="bench-table"></table></div>
+          <p id="bench-verdict" style="margin-top:10px"></p>
         </div>
       </div>
     </div>

@@ -66,6 +66,7 @@
     if (embedded) {
       if (path === 'index') return embedded.index;
       if (path === 'validation') return embedded.validation;
+      if (path === 'holdout') return embedded.holdout;
       return embedded.seasons[path];
     }
     const res = await fetch(`data/${path}.json`, { cache: 'no-cache' });
@@ -422,13 +423,27 @@
     document.getElementById('sanity-hist').textContent =
       `A clear-cut pair is two qualified QBs in the same season where one is at least as good in passer rating, ANY/A, rushing yards per game, touchdowns per game, giveaways per game and sack rate. From ${v.seasons_tested[0]} to ${v.seasons_tested[1]} there were ${sc.pairs.toLocaleString()} of them, and CQR put ${ok.toLocaleString()} in the right order.` +
       (misses.length ? ` ${misses.length === 1 ? 'The exception' : 'The exceptions'}: ${misses.join('; ')}.` : '');
+  }
+
+  function renderHoldout(h) {
+    if (!h) return;
     const b = document.getElementById('bench-table');
-    const max = { split_half: Math.max(...v.metrics.map((m) => m.split_half)), year_to_year: Math.max(...v.metrics.map((m) => m.year_to_year)), win_pct: Math.max(...v.metrics.map((m) => m.win_pct)) };
-    const cell = (m, k) => el('td', {}, m[k].toFixed(3), el('span', { class: 'meter', style: `width:${Math.round((m[k] / max[k]) * 36)}px`, 'aria-hidden': 'true' }));
+    const keys = ['split_half', 'year_to_year', 'win_pct'];
+    const max = Object.fromEntries(keys.map((k) => [k, Math.max(...h.metrics.map((m) => m[k]))]));
+    const mark = (m, i) => {
+      if (!m.diff_ci) return null;
+      const [lo, hi] = m.diff_ci[i];
+      const t = lo > 0 ? ['▲', 'CQR ahead'] : hi < 0 ? ['▼', 'CQR behind'] : ['=', 'too close to call'];
+      return el('span', { title: `CQR minus ${m.label}: ${lo.toFixed(3)} to ${hi.toFixed(3)} (95% CI). ${t[1]}`, style: 'color:var(--muted);margin-left:4px', text: t[0] });
+    };
+    const cell = (m, k, i) => el('td', {}, m[k].toFixed(3), mark(m, i),
+      el('span', { class: 'meter', style: `width:${Math.round((m[k] / max[k]) * 32)}px`, 'aria-hidden': 'true' }));
     b.replaceChildren(
       el('thead', {}, el('tr', {}, el('th', { class: 'left', text: 'Rating' }), el('th', { text: 'Split-half' }), el('th', { text: 'Year to year' }), el('th', { text: 'Wins' }))),
-      el('tbody', {}, v.metrics.map((m) => el('tr', { class: m.key === 'cqr' ? 'us' : null },
-        el('td', { class: 'left', text: m.label }), cell(m, 'split_half'), cell(m, 'year_to_year'), cell(m, 'win_pct')))));
+      el('tbody', {}, h.metrics.map((m) => el('tr', { class: m.key === 'cqr' ? 'us' : null },
+        el('td', { class: 'left', text: m.label }), ...keys.map((k, i) => cell(m, k, i))))));
+    document.getElementById('bench-verdict').textContent =
+      'The honest summary: CQR beats passer rating and ANY/A within a season and on winning, is statistically tied with raw EPA per play everywhere, and tracks winning a little better than Total QBR, which is slightly (not significantly) more consistent within a season. No year-to-year gap is significant. CQR\'s edge is completeness and transparency, not a leap in accuracy.';
   }
 
   async function loadSeason(season) {
@@ -465,6 +480,7 @@
     sel.addEventListener('change', () => loadSeason(Number(sel.value)));
     await loadSeason(state.index.current);
     try { renderTrack(await getJSON('validation')); } catch (e) { /* track record is optional */ }
+    try { renderHoldout(await getJSON('holdout')); } catch (e) { /* holdout results are optional */ }
   }
 
   init();

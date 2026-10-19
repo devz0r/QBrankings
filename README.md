@@ -13,14 +13,15 @@ Every play a quarterback is responsible for gets a value **A**, measured against
 same kind:
 
 ```
-A    = ½ × (EPA* − avg) + ½ × (AY − avg) ÷ 9
+A    = ⅓ × (EPA* − avg) + ⅔ × (AY − avg) ÷ 9
 
-EPA* = EPA − ¼ × receiver's YAC beyond expected
-           + 4 × (lost − p)      on the QB's own fumbles
-           × ½                   on pass interference drawn
+EPA* = EPA
+       + 4 × (lost − p)      on the QB's own fumbles
+       × ½                   on pass interference drawn
 
-AY   = pass yds + rush yds − sack yds − ¼ × YAC beyond expected
-       + 20 × TD − 45 × INT − 45 × p per fumble
+AY   = pass yds + rush yds − sack yds + 20 × TD − 45 × INT − 45 × p per fumble
+       (no INT charge on end-of-half heaves or on 3rd/4th-and-10+ throws of 20+ air yards,
+        which work like punts; EPA still charges what they actually cost)
 ```
 
 * **avg** is the league average for a dropback, or for an NFL run in the same situation (short yardage or
@@ -28,14 +29,14 @@ AY   = pass yds + rush yds − sack yds − ¼ × YAC beyond expected
 * **p** is how often that kind of fumble is lost league-wide (strip-sack 52%, designed run 41%, botched
   snap 26%, other dropback 19%).
 * **EPA** is nflfastR's expected points added; **AY** is an all-plays version of ANY/A. Nine adjusted yards
-  equal one point, which gives the two halves equal spread.
+  equal one point, which gives the two parts equal spread before weighting.
 
 Then:
 
 ```
-      Σ w×A − Σ w×D
-V  = ───────────────      w = 1.25 in the 4th quarter / OT within 8 points, else 1
-      dropbacks + 100     D = rating of the defense faced (per dropback)
+              Σ w×A − Σ w×D
+V  = ──────────────────────────────     w = 1.25 in the 4th quarter / OT within 8 points, else 1
+     max(dropbacks, ¾ × plays) + 100    D = rating of the defense faced (per dropback)
 
 CQR = 100 ÷ (1 + e^(−V ÷ 0.085))
 ```
@@ -43,13 +44,20 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))
 * **D** is each defense's average A allowed to *other* teams' quarterbacks, regressed toward average with
   an 800-dropback prior.
 * **+100** gives every QB 100 dropbacks of league-average play, so one hot game can't make a backup No. 1.
-* Designed runs add to the numerator but not the denominator, so a dual threat's running adds value
-  instead of diluting the passing rate.
-* Qualified QBs have at least 14 dropbacks per team game (the NFL's passer-rating bar).
+  It is not negligible: at 300 dropbacks it pulls a rating 25% of the way toward average, about 14% over
+  a full season.
+* Designed runs add to the numerator, and only count in the denominator once they push it below ¾ of all
+  plays, so a dual threat's running adds value instead of diluting the passing rate.
+* Qualified QBs have at least 14 dropbacks per team game (the NFL's passer-rating bar). Players who drop
+  back on fewer than half their snaps (gadget QBs such as Taysom Hill) aren't listed.
 
 Counted plays: pass attempts, sacks, scrambles, designed runs (including sneaks), botched snaps,
 two-point tries and drawn defensive pass interference. Ignored: kneel-downs, spikes and plays wiped out by
 any other penalty. Regular season only.
+
+What CQR measures is **opponent-adjusted quarterback production**. It removes recovery luck, teammates'
+penalties and schedule, but pass protection, drops, receivers and play design still show up in it, as they
+do in every public QB stat.
 
 The code is the spec: [`qbrank/formula.py`](qbrank/formula.py).
 
@@ -58,43 +66,53 @@ The code is the spec: [`qbrank/formula.py`](qbrank/formula.py).
 | Piece | Why |
 |---|---|
 | Expected points (EPA) | Knows that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12, and what a turnover or sack does to the drive. |
-| Adjusted yards (AY) | Keeps the rating anchored to production fans can see. In testing, blending the two roughly halved the "no way" orderings without making the rating any less stable. |
-| ¼ of YAC beyond expected goes to the receiver | A 5-yard slant turned into a 70-yard score by broken tackles is mostly the receiver. The QB keeps the expected YAC the throw set up, and most of the rest. |
+| Adjusted yards (AY) | Keeps the rating anchored to production fans can see, and is steadier than EPA. ⅓ / ⅔ was the best blend on 2016-2020. |
 | Fumbles at their average cost | Putting the ball on the ground is the QB's fault; who recovers it is close to a coin flip. |
+| Arm-punt interceptions | A deep pick on 3rd-and-15 is roughly a punt; EPA prices it that way and the yards side no longer double-charges it. |
 | Designed runs against an average NFL run | Credits dual threats for what their runs add over a normal run play, without penalizing pocket passers. |
-| 1.25× late and close | Crunch time matters, but a handful of snaps shouldn't decide a season. |
+| 1.25× late and close | Crunch time matters, but a handful of snaps shouldn't decide a season. Kept because it tested slightly better than 1.0. |
 | Defense adjustment | 300 yards against the best pass defense isn't 300 yards against the worst. |
 | 100-dropback cushion | Small samples are noisy; this keeps a backup's great half from topping the list. |
 
-Tested and left out: discounting garbage time (it made rankings less stable and fixed nothing), stripping
-all YAC from the QB (much less stable), counting drawn pass interference in full (less stable), and
-rewarding volume (per-game value agreed less with the eye test than the per-dropback rate).
+Tested and left out: discounting garbage time (less stable, fixed nothing), giving receivers part of the
+yards after catch (no gain on 2016-2020), counting drawn pass interference in full, and rewarding volume
+(per-game value agreed less with the eye test than the per-dropback rate).
 
-## Track record (2016-2025 regular seasons)
+## Track record
 
-| Rating | Split-half reliability | Year to year | Correlation with win % |
+### Out of sample (the fair test)
+
+Weights were chosen on 2016-2020 only by a rule fixed in advance (`tools/holdout.py`), then frozen and
+scored on 2021-2025. Paired bootstrap 95% intervals on the difference (CQR minus the other rating):
+
+| Rating | Split-half | Year to year | Correlation with win % |
 |---|---|---|---|
-| **CQR** | 0.493 | 0.363 | 0.718 |
-| Passer rating | 0.413 | 0.339 | 0.632 |
-| ANY/A | 0.445 | 0.356 | 0.667 |
-| EPA per play | 0.466 | 0.351 | 0.721 |
-| ESPN Total QBR | 0.505 | 0.287 | 0.664 |
+| **CQR** | 0.555 | 0.389 | 0.756 |
+| EPA per play | 0.529 (tie) | 0.392 (tie) | 0.770 (tie) |
+| ESPN Total QBR | 0.589 (tie) | 0.352 (tie) | 0.700 (CQR ahead) |
+| ANY/A | 0.484 (CQR ahead) | 0.339 (tie) | 0.709 (CQR ahead) |
+| Passer rating | 0.348 (CQR ahead) | 0.315 (tie) | 0.653 (CQR ahead) |
 
-Split-half compares a QB's rating in odd weeks with the same QB's rating in even weeks of that season;
-year to year compares consecutive seasons; the last column is the correlation with the team's win rate in
-that QB's starts. CQR is the most stable from one season to the next and essentially tied with raw EPA for the
-closest link to winning. Total QBR is a little steadier within a season but much less stable across seasons.
+Split-half compares a QB's rating in odd weeks with the same QB's rating in even weeks; year to year
+compares consecutive seasons; the last column correlates with the team's win rate in that QB's starts.
+Honest summary: CQR beats passer rating and ANY/A, is statistically tied with raw EPA, and tracks winning
+a little better than Total QBR. Its edge is completeness and transparency, not a leap in accuracy. The
+original 50/50 formula scored the same on these seasons (0.553 / 0.390 / 0.766), so tuning changed little.
+
+### Eye test (2016-2025)
 
 * The AP MVP ranked first or second in CQR in 8 of 9 seasons (2016-2024). The exception is Lamar Jackson in
-  2023 (5th, behind Purdy, Prescott, Allen and Tagovailoa, who were more efficient per play).
+  2023 (6th, essentially tied with Jared Goff and C.J. Stroud; Purdy, Prescott, Allen and Tagovailoa were
+  more efficient per play).
 * **Clear-cut pairs:** two qualified QBs in the same season where one is at least as good in passer rating,
   ANY/A, rushing yards per game, TDs per game, giveaways per game and sack rate. There were 852 of them;
-  CQR orders 850 correctly. The two exceptions come from schedule strength (Trubisky 2020) and a near tie
-  (Garoppolo vs. Cousins 2021).
-* Best seasons since 2016: Lamar Jackson 2019 (97.0), Lamar Jackson 2024 (96.2), Patrick Mahomes 2018
-  (94.3), Brock Purdy 2023 (94.3), Matt Ryan 2016 (92.9).
+  CQR orders 850 correctly. The exceptions: Burrow over Trubisky in 2020 (Trubisky's numbers came against
+  soft defenses) and Garoppolo over Cousins in 2021 (near-identical box scores; Garoppolo averaged 8.7
+  yards per attempt to Cousins' 7.6).
+* Best seasons since 2016: Lamar Jackson 2024 (97.2), Lamar Jackson 2019 (96.8), Brock Purdy 2023 (95.6),
+  Patrick Mahomes 2018 (95.3), Matt Ryan 2016 (94.5).
 
-Reproduce with `python -m qbrank.validate`.
+Reproduce with `python -m qbrank.validate` and `tools/holdout.py`.
 
 ## Running it
 
@@ -103,6 +121,7 @@ pip install -r requirements.txt
 python -m qbrank.build              # current season -> site/data/<season>.json
 python -m qbrank.build --all        # every season since 2016
 python -m qbrank.validate           # back-test -> site/data/validation.json
+python tools/holdout.py .cache tune tune_0.33.json 0.33   # out-of-sample test; see the script's docstring
 python -m pytest -q
 python -m http.server -d site 8000  # then open http://localhost:8000
 ```

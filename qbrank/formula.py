@@ -9,23 +9,24 @@ Overview
    sacks, scrambles, botched snaps, pass interference drawn) and designed runs
    (including sneaks and two-point tries). Kneels, spikes and plays wiped out
    by a penalty (other than defensive pass interference) are ignored.
-2. Value each play two ways and average them:
-     * Points:  expected points added (EPA) with three fixes - receivers keep
-       25% of the yards-after-catch they earned beyond expectation, fumbles
-       are charged at their average cost (recovering your own fumble is luck),
-       and drawn pass interference counts half.
+2. Value each play two ways and blend them, 1/3 points and 2/3 yards (the
+   blend that tested best on 2016-2020; see tools/holdout.py):
+     * Points:  expected points added (EPA), with fumbles charged at their
+       average cost (recovering your own fumble is luck) and drawn pass
+       interference at half value.
      * Yards:   adjusted yards, an all-plays version of ANY/A - passing and
        rushing yards, minus sack yards, +20 per TD, -45 per interception
-       (not on end-of-half heaves), -45 per expected lost fumble.
-       Nine adjusted yards = one point.
+       (not on end-of-half heaves or 3rd/4th-and-long deep "arm punts"),
+       -45 per expected lost fumble. Nine adjusted yards = one point.
    Each play is compared with the league average for the same kind of play
    (an average dropback, or an average NFL run in the same situation).
 3. Plays in the 4th quarter or overtime of one-score games count 1.25x.
 4. Subtract the quality of the defenses faced (each defense's average value
    allowed to other teams' quarterbacks, regressed toward average).
-5. Divide by dropbacks plus 100 "phantom" league-average dropbacks, so a QB's
-   rating has to be earned over a real sample. Designed runs add value on top
-   of the per-dropback rate instead of diluting it.
+5. Divide by dropbacks (or 3/4 of all plays, whichever is larger) plus 100
+   "phantom" league-average dropbacks, so a rating has to be earned over a
+   real sample. Designed runs add value on top of the per-dropback rate
+   instead of diluting it.
 6. Map to 0-100 with a logistic curve: 50 is exactly league average.
 """
 from __future__ import annotations
@@ -36,11 +37,11 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 # Constants (calibrated on 2016-2025 regular seasons; see README)
 # ---------------------------------------------------------------------------
-YAC_RECEIVER_SHARE = 0.25   # share of YAC-over-expected credited to the receiver, not the QB
+YAC_RECEIVER_SHARE = 0.0    # share of YAC-over-expected credited to the receiver, not the QB
 DPI_SHARE = 0.5             # defensive pass interference drawn counts half
 CLUTCH_WEIGHT = 1.25        # 4th quarter / OT with the score within 8 points
 CLUTCH_MARGIN = 8
-POINTS_WEIGHT = 0.5         # blend: half points (EPA), half adjusted yards
+POINTS_WEIGHT = 1 / 3       # blend: one third points (EPA), two thirds adjusted yards
 YARDS_PER_POINT = 9.0       # converts adjusted yards to points
 TD_BONUS_YARDS = 20.0
 INT_COST_YARDS = 45.0
@@ -51,6 +52,11 @@ FUMBLE_LOST_RATE = {'sack': 0.52, 'dropback': 0.19, 'run': 0.41, 'snap': 0.26}
 SHORT_YARDAGE = 2           # designed runs with <= 2 yards to go use the short-yardage baseline
 HEAVE_SECONDS = 8           # end-of-half heave: <= 8 s left in the half ...
 HEAVE_AIR_YARDS = 30        # ... thrown 30+ yards; an interception there costs no yards
+ARM_PUNT_FREE = True        # if True: 3rd/4th-and-long deep interceptions cost no yards either (EPA still charges them)
+ARM_PUNT_TO_GO = 10
+ARM_PUNT_AIR_YARDS = 20
+MIN_DENOM_SHARE = 0.75      # denominator is at least 75% of all weighted plays, so run-heavy gadget QBs
+                            # can't divide a pile of rushing value by a handful of dropbacks
 DEFENSE_PRIOR_DROPBACKS = 800.0
 QB_PRIOR_DROPBACKS = 100.0
 GAME_PRIOR_DROPBACKS = 10.0  # lighter prior for single-game scores
@@ -130,6 +136,9 @@ def select_plays(pbp: pd.DataFrame, qb_ids) -> pd.DataFrame:
     td = ((_flag(x, 'pass_touchdown') | _flag(x, 'rush_touchdown')) & (x.td_team == x.posteam) & ~x.two_pt)
     intercepted = _flag(x, 'interception')
     heave = intercepted & (x.half_seconds_remaining <= HEAVE_SECONDS) & (x.air_yards.fillna(0) >= HEAVE_AIR_YARDS)
+    if ARM_PUNT_FREE:
+        heave = heave | (intercepted & (x.down.fillna(0) >= 3) & (x.ydstogo.fillna(0) >= ARM_PUNT_TO_GO)
+                         & (x.air_yards.fillna(0) >= ARM_PUNT_AIR_YARDS))
     adj = (pass_yds - YAC_RECEIVER_SHARE * yac_over_exp_y + rush_yds + sack_yds + dpi_yds
            + TD_BONUS_YARDS * td - INT_COST_YARDS * (intercepted & ~heave) - FUMBLE_COST_YARDS * p_lost)
     # two-point tries: +/-10 yards so the yards side agrees with the points side
@@ -197,12 +206,13 @@ def rate(q: pd.DataFrame, prior: float = QB_PRIOR_DROPBACKS, by=('qb',)) -> pd.D
     """Aggregate valued, defense-adjusted plays into ratings."""
     by = list(by)
     g = q.groupby(by)
-    out = g.agg(plays=('value', 'size'), dropbacks=('dropback', 'sum'), w_dropbacks=('w_dropback', 'sum'),
+    out = g.agg(plays=('value', 'size'), dropbacks=('dropback', 'sum'), w_dropbacks=('w_dropback', 'sum'), w_plays=('weight', 'sum'),
                 value=('w_value', 'sum'), schedule=('schedule', 'sum'), games=('game_id', 'nunique'))
     for name, kinds in COMPONENTS.items():
         out[name] = q[q.kind.isin(kinds)].groupby(by).w_value.sum().reindex(out.index).fillna(0.0)
     out['total'] = out.value + out.schedule
-    out['per_dropback'] = (out.total / (out.w_dropbacks + prior)).replace([np.inf, -np.inf], np.nan)
+    denom = np.maximum(out.w_dropbacks, MIN_DENOM_SHARE * out.w_plays) + prior
+    out['per_dropback'] = (out.total / denom).replace([np.inf, -np.inf], np.nan)
     out['cqr'] = cqr(out.per_dropback)
     return out
 

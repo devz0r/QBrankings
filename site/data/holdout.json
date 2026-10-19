@@ -1,0 +1,116 @@
+{
+ "tuned_on": [
+  2016,
+  2020
+ ],
+ "tested_on": [
+  2021,
+  2025
+ ],
+ "config": {
+  "points_weight": "1/3",
+  "clutch_weight": 1.25,
+  "yac_receiver_share": 0.0,
+  "dpi_share": 0.5,
+  "arm_punt_free": true
+ },
+ "metrics": [
+  {
+   "key": "cqr",
+   "label": "CQR",
+   "split_half": 0.555,
+   "year_to_year": 0.389,
+   "win_pct": 0.756,
+   "diff_ci": null
+  },
+  {
+   "key": "epa",
+   "label": "EPA per play",
+   "split_half": 0.529,
+   "year_to_year": 0.392,
+   "win_pct": 0.77,
+   "diff_ci": [
+    [
+     -0.045,
+     0.1
+    ],
+    [
+     -0.069,
+     0.063
+    ],
+    [
+     -0.043,
+     0.012
+    ]
+   ]
+  },
+  {
+   "key": "qbr",
+   "label": "ESPN Total QBR",
+   "split_half": 0.589,
+   "year_to_year": 0.352,
+   "win_pct": 0.7,
+   "diff_ci": [
+    [
+     -0.12,
+     0.052
+    ],
+    [
+     -0.08,
+     0.151
+    ],
+    [
+     0.001,
+     0.122
+    ]
+   ]
+  },
+  {
+   "key": "anya",
+   "label": "ANY/A",
+   "split_half": 0.484,
+   "year_to_year": 0.339,
+   "win_pct": 0.709,
+   "diff_ci": [
+    [
+     0.019,
+     0.139
+    ],
+    [
+     -0.007,
+     0.137
+    ],
+    [
+     0.016,
+     0.077
+    ]
+   ]
+  },
+  {
+   "key": "rating",
+   "label": "Passer rating",
+   "split_half": 0.348,
+   "year_to_year": 0.315,
+   "win_pct": 0.653,
+   "diff_ci": [
+    [
+     0.118,
+     0.303
+    ],
+    [
+     -0.019,
+     0.217
+    ],
+    [
+     0.043,
+     0.158
+    ]
+   ]
+  }
+ ],
+ "original_formula": {
+  "split_half": 0.553,
+  "year_to_year": 0.39,
+  "win_pct": 0.766
+ }
+}

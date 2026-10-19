@@ -27,6 +27,7 @@ def bundle(fragment: bool) -> str:
     data_dir = os.path.join(SITE, 'data')
     data = {'index': json.load(open(os.path.join(data_dir, 'index.json'))),
             'validation': json.load(open(os.path.join(data_dir, 'validation.json'))),
+            'holdout': json.load(open(os.path.join(data_dir, 'holdout.json'))),
             'seasons': {}}
     for path in sorted(glob.glob(os.path.join(data_dir, '[0-9][0-9][0-9][0-9].json'))):
         data['seasons'][os.path.basename(path)[:4]] = json.load(open(path))

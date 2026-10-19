@@ -214,12 +214,12 @@
     const ppg = q.pts_per_game;
     parts.push(ppg >= 0
       ? `${q.name} is adding ${signed(ppg)} points per game compared with an average quarterback`
-      : `${q.name} is costing his team ${Math.abs(ppg).toFixed(1)} points per game compared with an average quarterback`);
+      : `${q.name} is ${Math.abs(ppg).toFixed(1)} points per game worse than an average quarterback`);
     parts[0] += c.rushing >= 1.5 ? `, ${signed(c.rushing)} of it as a runner.` : '.';
-    if (c.sacks <= -5) parts.push(`Sacks and botched snaps cost him ${Math.abs(c.sacks).toFixed(1)} a game.`);
+    if (c.sacks <= -5) parts.push(`Sacks and botched snaps cost ${Math.abs(c.sacks).toFixed(1)} points a game.`);
     if (Math.abs(c.schedule) >= 0.5) parts.push(c.schedule > 0
-      ? `He has faced tougher defenses than most, worth ${signed(c.schedule)} a game in the adjustment.`
-      : `He has faced softer defenses than most, so the adjustment takes away ${Math.abs(c.schedule).toFixed(1)} a game.`);
+      ? `The defenses faced have been tougher than most, worth ${signed(c.schedule)} a game in the adjustment.`
+      : `The defenses faced have been softer than most, so the adjustment takes away ${Math.abs(c.schedule).toFixed(1)} a game.`);
     const b = q.box;
     return el('div', { class: 'panel' },
       el('h3', { text: q.qualified ? `${ordinal(q.rank)} of ${nQual} qualified` : 'Part-time QB' }),

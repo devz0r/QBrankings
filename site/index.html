@@ -36,7 +36,7 @@
       <div>
         <p class="eyebrow" id="season-label">Loading rankings</p>
         <h1 id="lede">Quarterback rankings</h1>
-        <p class="lede-sub" id="lede-sub">One number for everything a quarterback does: passing, running, sacks, turnovers and the defenses he faced. 50 is exactly league average.</p>
+        <p class="lede-sub" id="lede-sub">One number for everything a quarterback does: passing, running, sacks, turnovers and the defenses faced. 50 is exactly league average.</p>
       </div>
       <div class="controls">
         <div class="field">
@@ -126,12 +126,12 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
         </div>
       </div>
       <ol class="steps">
-        <li><h3>Count every play the QB owns</h3><p>Passes, sacks, scrambles, botched snaps, designed runs, sneaks, two-point tries and pass interference he draws. Kneel-downs and spikes are ignored, and so are plays wiped out by a teammate's penalty.</p></li>
+        <li><h3>Count every play the QB owns</h3><p>Passes, sacks, scrambles, botched snaps, designed runs, sneaks, two-point tries and drawn pass interference. Kneel-downs and spikes are ignored, and so are plays wiped out by a teammate's penalty.</p></li>
         <li><h3>Value it in points and in yards</h3><p>Expected points know that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12. Adjusted yards know what the box score knows. Each catches the other's blind spots, so CQR averages them. Nine adjusted yards count as one point.</p></li>
         <li><h3>Take out what the QB doesn't control</h3><p>Receivers keep a quarter of the yards they gain after the catch beyond what a normal receiver would. Fumbles are charged at their average cost, because who falls on the ball is luck. Drawn pass interference counts half.</p></li>
-        <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting his passing rate. That is how CQR counts dual threats.</p></li>
+        <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting the passing rate. That is how CQR counts dual threats.</p></li>
         <li><h3>Weight crunch time a little</h3><p>Plays in the 4th quarter or overtime of a one-score game count 1.25 times. Clutch play matters, but not so much that a handful of snaps decide a season.</p></li>
-        <li><h3>Adjust for the defenses faced</h3><p>Each defense is rated by what it allows to other teams' quarterbacks, regressed heavily toward average early in the year, and the QB is credited or charged for the defenses on his schedule.</p></li>
+        <li><h3>Adjust for the defenses faced</h3><p>Each defense is rated by what it allows to other teams' quarterbacks, regressed heavily toward average early in the year, and the QB is credited or charged for the defenses on the schedule.</p></li>
         <li><h3>Make it earn the sample</h3><p>Every QB starts with 100 dropbacks of league-average play. One hot game can't vault a backup to No. 1, and by midseason the cushion barely matters. Then the per-dropback value goes on a 0-100 curve where 50 is league average and 90-plus is an MVP-level season.</p></li>
       </ol>
     </div>
@@ -171,10 +171,10 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
     <div class="faq">
       <details><summary>Why is a QB with more yards ranked below one with fewer?</summary><p>CQR is a rate. A quarterback who throws 45 times a game for 300 yards is less efficient than one who throws 28 times for 260, and the extra attempts are usually the team trailing, not extra quality. The "Points per game" columns show total value if you want volume in the picture: they add up what the QB produced compared with an average quarterback on the same number of snaps.</p></details>
       <details><summary>How does CQR treat sacks?</summary><p>As the drive-killers they are. A sack costs the yards and usually the down, and that is close to two points of expected value. Research on pressure-to-sack rates shows quarterbacks own a large share of their sacks, so they are charged in full.</p></details>
-      <details><summary>Why does a recovered fumble count against the QB?</summary><p>Because putting the ball on the ground is the mistake. Whether a teammate or a defender falls on it is close to a coin flip, so CQR charges every fumble its average cost. That makes a fumble-prone QB look worse than his "fumbles lost" line, and an unlucky one look a little better.</p></details>
+      <details><summary>Why does a recovered fumble count against the QB?</summary><p>Because putting the ball on the ground is the mistake. Whether a teammate or a defender falls on it is close to a coin flip, so CQR charges every fumble its average cost. That makes a fumble-prone QB look worse than the "fumbles lost" line suggests, and an unlucky one look a little better.</p></details>
       <details><summary>Why doesn't CQR count wins?</summary><p>Wins belong to the whole roster. CQR measures the plays the quarterback is responsible for. Even so, it tracks winning more closely than passer rating, ANY/A or Total QBR do (see the track record).</p></details>
       <details><summary>What about garbage time?</summary><p>It was tested. Discounting blowout snaps made rankings less stable and didn't fix a single eye-test problem, because on a per-play basis garbage time cuts both ways: soft prevent coverage, but also desperate throws into it. Crunch time gets the small 1.25 weight instead.</p></details>
-      <details><summary>Why did a QB's rating move during his bye week?</summary><p>His opponents kept playing. As the season goes on, the ratings of the defenses he faced get sharper, and his schedule adjustment moves with them.</p></details>
+      <details><summary>Why did a QB's rating move during a bye week?</summary><p>The opponents kept playing. As the season goes on, the ratings of the defenses already faced get sharper, and the schedule adjustment moves with them.</p></details>
       <details><summary>Who counts as qualified?</summary><p>At least 14 dropbacks per team game, the same bar the NFL uses for passer rating attempts. Part-time QBs are still rated; switch on "Include part-time QBs" to see them.</p></details>
       <details><summary>Where does the data come from, and when does it update?</summary><p>Play-by-play from nflverse (nflfastR), which includes the expected-points model. The site rebuilds itself automatically on Monday, Tuesday and Friday mornings during the season, so Sunday, Monday and Thursday games are in by the time you read it.</p></details>
     </div>

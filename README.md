@@ -1,7 +1,7 @@
 # CQR: Complete Quarterback Rating
 
 One number for everything a quarterback does: passing, running, sacks, turnovers, crunch time and the
-defenses he faced. 50 is exactly league average; 90+ is an MVP-level season.
+defenses faced. 50 is exactly league average; 90+ is an MVP-level season.
 
 The site in `site/` shows live rankings for the current NFL season, every season back to 2016, the formula
 and its track record. A GitHub Actions workflow rebuilds it on Monday, Tuesday and Friday mornings during
@@ -44,7 +44,7 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))
   an 800-dropback prior.
 * **+100** gives every QB 100 dropbacks of league-average play, so one hot game can't make a backup No. 1.
 * Designed runs add to the numerator but not the denominator, so a dual threat's running adds value
-  instead of diluting his passing rate.
+  instead of diluting the passing rate.
 * Qualified QBs have at least 14 dropbacks per team game (the NFL's passer-rating bar).
 
 Counted plays: pass attempts, sacks, scrambles, designed runs (including sneaks), botched snaps,
@@ -59,7 +59,7 @@ The code is the spec: [`qbrank/formula.py`](qbrank/formula.py).
 |---|---|
 | Expected points (EPA) | Knows that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12, and what a turnover or sack does to the drive. |
 | Adjusted yards (AY) | Keeps the rating anchored to production fans can see. In testing, blending the two roughly halved the "no way" orderings without making the rating any less stable. |
-| ¼ of YAC beyond expected goes to the receiver | A 5-yard slant turned into a 70-yard score by broken tackles is mostly the receiver. The QB keeps the expected YAC his throw set up, and most of the rest. |
+| ¼ of YAC beyond expected goes to the receiver | A 5-yard slant turned into a 70-yard score by broken tackles is mostly the receiver. The QB keeps the expected YAC the throw set up, and most of the rest. |
 | Fumbles at their average cost | Putting the ball on the ground is the QB's fault; who recovers it is close to a coin flip. |
 | Designed runs against an average NFL run | Credits dual threats for what their runs add over a normal run play, without penalizing pocket passers. |
 | 1.25× late and close | Crunch time matters, but a handful of snaps shouldn't decide a season. |
@@ -80,9 +80,9 @@ rewarding volume (per-game value agreed less with the eye test than the per-drop
 | EPA per play | 0.466 | 0.351 | 0.721 |
 | ESPN Total QBR | 0.505 | 0.287 | 0.664 |
 
-Split-half compares a QB's rating in odd weeks with his rating in even weeks of the same season; year to
-year compares consecutive seasons; the last column is the correlation with his team's win rate in his
-starts. CQR is the most stable from one season to the next and essentially tied with raw EPA for the
+Split-half compares a QB's rating in odd weeks with the same QB's rating in even weeks of that season;
+year to year compares consecutive seasons; the last column is the correlation with the team's win rate in
+that QB's starts. CQR is the most stable from one season to the next and essentially tied with raw EPA for the
 closest link to winning. Total QBR is a little steadier within a season but much less stable across seasons.
 
 * The AP MVP ranked first or second in CQR in 8 of 9 seasons (2016-2024). The exception is Lamar Jackson in

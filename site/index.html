@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- bundle:head -->
+<title>CQR Quarterback Rankings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Complete Quarterback Rating: one number for everything a quarterback does - passing, running, sacks, turnovers, schedule - updated every week of the NFL season.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;650;700&family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- /bundle:head -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- bundle:body -->
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="brand" href="#rankings" aria-label="CQR home">
+      <span class="brand-mark">CQR</span>
+      <span class="brand-name">Complete Quarterback Rating</span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#rankings">Rankings</a>
+      <a href="#formula">Formula</a>
+      <a href="#track-record">Track record</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="rankings" aria-labelledby="lede">
+    <div class="board-head">
+      <div>
+        <p class="eyebrow" id="season-label">Loading rankings</p>
+        <h1 id="lede">Quarterback rankings</h1>
+        <p class="lede-sub" id="lede-sub">One number for everything a quarterback does: passing, running, sacks, turnovers and the defenses he faced. 50 is exactly league average.</p>
+      </div>
+      <div class="controls">
+        <div class="field">
+          <label for="season">Season</label>
+          <select id="season" aria-label="Season"></select>
+        </div>
+        <div class="field grow">
+          <label for="search">Find</label>
+          <input id="search" type="search" placeholder="QB or team" autocomplete="off">
+        </div>
+        <label class="toggle" for="show-all"><input type="checkbox" id="show-all"> Include part-time QBs</label>
+      </div>
+    </div>
+
+    <div class="key" aria-hidden="true">
+      <span class="key-item"><span class="key-line"></span>League average (CQR 50), drawn as the line to gain</span>
+      <span class="key-item"><span class="key-swatch" style="background: var(--good)"></span>Above average</span>
+      <span class="key-item"><span class="key-swatch" style="background: var(--bad)"></span>Below average</span>
+      <span class="key-item">Value columns are points per game versus an average QB</span>
+    </div>
+
+    <div class="board-card">
+      <div class="table-scroll">
+        <table class="board" id="board" aria-describedby="board-note">
+          <thead>
+            <tr class="group">
+              <th colspan="6"></th>
+              <th class="col-comp" colspan="5"><span>Points per game vs. average QB</span></th>
+              <th class="col-box" colspan="9"><span>Box score</span></th>
+            </tr>
+            <tr id="board-head"></tr>
+          </thead>
+          <tbody id="board-body"><tr><td class="empty" colspan="20">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="footnote" id="board-note"></p>
+  </section>
+
+  <section id="formula" aria-labelledby="formula-title">
+    <div class="section-head">
+      <p class="eyebrow">How it works</p>
+      <h2 id="formula-title">The formula</h2>
+      <p>CQR grades every snap a quarterback is responsible for, in two currencies: expected points (what the play did to the team's scoring chances given down, distance and field position) and adjusted yards (the box score, done right). It then removes what the quarterback doesn't control and puts the result on a 0-100 scale.</p>
+    </div>
+    <div class="cols">
+      <div class="stack">
+<pre class="formula" aria-label="CQR formula"><span class="cm">// 1. value every QB play against an average play of its kind</span>
+A  = ½ × (<span class="hl">EPA*</span> − avg) + ½ × (<span class="hl">AY</span> − avg) ÷ 9
+
+<span class="hl">EPA*</span> = EPA − ¼ × receiver's YAC beyond expected
+     + 4 × (lost − p)     <span class="cm">on the QB's own fumbles</span>
+     × ½                  <span class="cm">on pass interference drawn</span>
+
+<span class="hl">AY</span>   = pass yds + rush yds − sack yds
+     − ¼ × YAC beyond expected
+     + 20 × TD − 45 × INT − 45 × p per fumble
+
+<span class="cm">// avg: league average for a dropback, or for an NFL run</span>
+<span class="cm">//      in the same situation (short yardage or not)</span>
+<span class="cm">// p:   how often that kind of fumble is lost league-wide</span>
+
+<span class="cm">// 2. weight crunch time, adjust for defenses, add a cushion</span>
+      Σ w×A − Σ w×D
+V  = ───────────────     w = 1.25 in 4th qtr / OT within 8
+      dropbacks + 100    D = rating of the defense faced
+
+<span class="cm">// 3. 0-100 scale, 50 = league average</span>
+CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
+        <div class="card">
+          <h3>The constants</h3>
+          <table class="consts">
+            <tbody>
+              <tr><td>Weight on expected points vs. adjusted yards</td><td>50 / 50</td></tr>
+              <tr><td>Adjusted yards per point</td><td>9</td></tr>
+              <tr><td>Touchdown bonus / interception cost (yards)</td><td>+20 / −45</td></tr>
+              <tr><td>Receiver's share of YAC beyond expected</td><td>25%</td></tr>
+              <tr><td>Defensive pass interference drawn</td><td>50%</td></tr>
+              <tr><td>Fumble lost rate: strip-sack / run / snap / other</td><td>52 / 41 / 26 / 19%</td></tr>
+              <tr><td>Late &amp; close weight (4th qtr or OT, within 8)</td><td>1.25×</td></tr>
+              <tr><td>Cushion of league-average dropbacks</td><td>100</td></tr>
+              <tr><td>Defense regression (dropbacks)</td><td>800</td></tr>
+              <tr><td>Scale constant</td><td>0.085</td></tr>
+              <tr><td>Qualify: dropbacks per team game</td><td>14</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><h3>Count every play the QB owns</h3><p>Passes, sacks, scrambles, botched snaps, designed runs, sneaks, two-point tries and pass interference he draws. Kneel-downs and spikes are ignored, and so are plays wiped out by a teammate's penalty.</p></li>
+        <li><h3>Value it in points and in yards</h3><p>Expected points know that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12. Adjusted yards know what the box score knows. Each catches the other's blind spots, so CQR averages them. Nine adjusted yards count as one point.</p></li>
+        <li><h3>Take out what the QB doesn't control</h3><p>Receivers keep a quarter of the yards they gain after the catch beyond what a normal receiver would. Fumbles are charged at their average cost, because who falls on the ball is luck. Drawn pass interference counts half.</p></li>
+        <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting his passing rate. That is how CQR counts dual threats.</p></li>
+        <li><h3>Weight crunch time a little</h3><p>Plays in the 4th quarter or overtime of a one-score game count 1.25 times. Clutch play matters, but not so much that a handful of snaps decide a season.</p></li>
+        <li><h3>Adjust for the defenses faced</h3><p>Each defense is rated by what it allows to other teams' quarterbacks, regressed heavily toward average early in the year, and the QB is credited or charged for the defenses on his schedule.</p></li>
+        <li><h3>Make it earn the sample</h3><p>Every QB starts with 100 dropbacks of league-average play. One hot game can't vault a backup to No. 1, and by midseason the cushion barely matters. Then the per-dropback value goes on a 0-100 curve where 50 is league average and 90-plus is an MVP-level season.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="track-record" aria-labelledby="track-title">
+    <div class="section-head">
+      <p class="eyebrow">Does it pass the eye test?</p>
+      <h2 id="track-title">Track record, 2016 to 2025</h2>
+      <p>The formula was built on ten past seasons and checked three ways: whether it agrees with seasons everyone remembers, whether it ever puts a clearly worse stat line ahead of a clearly better one, and whether it measures something stable about the quarterback rather than noise.</p>
+    </div>
+    <div class="cols">
+      <div class="card">
+        <h3>Season by season</h3>
+        <p id="mvp-note"></p>
+        <div class="table-scroll"><table class="seasons" id="seasons-table"></table></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h3>Clear-cut pairs</h3>
+          <p id="sanity-hist"></p>
+        </div>
+        <div class="card">
+          <h3>Against other QB ratings</h3>
+          <p>Higher is better in every column. Split-half: rating from odd weeks vs. even weeks of the same season. Year to year: one season vs. the next. Wins: correlation with the team's win rate in the QB's starts.</p>
+          <div class="table-scroll"><table class="bench" id="bench-table"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-title">
+    <div class="section-head">
+      <p class="eyebrow">Questions</p>
+      <h2 id="faq-title">FAQ</h2>
+    </div>
+    <div class="faq">
+      <details><summary>Why is a QB with more yards ranked below one with fewer?</summary><p>CQR is a rate. A quarterback who throws 45 times a game for 300 yards is less efficient than one who throws 28 times for 260, and the extra attempts are usually the team trailing, not extra quality. The "Points per game" columns show total value if you want volume in the picture: they add up what the QB produced compared with an average quarterback on the same number of snaps.</p></details>
+      <details><summary>How does CQR treat sacks?</summary><p>As the drive-killers they are. A sack costs the yards and usually the down, and that is close to two points of expected value. Research on pressure-to-sack rates shows quarterbacks own a large share of their sacks, so they are charged in full.</p></details>
+      <details><summary>Why does a recovered fumble count against the QB?</summary><p>Because putting the ball on the ground is the mistake. Whether a teammate or a defender falls on it is close to a coin flip, so CQR charges every fumble its average cost. That makes a fumble-prone QB look worse than his "fumbles lost" line, and an unlucky one look a little better.</p></details>
+      <details><summary>Why doesn't CQR count wins?</summary><p>Wins belong to the whole roster. CQR measures the plays the quarterback is responsible for. Even so, it tracks winning more closely than passer rating, ANY/A or Total QBR do (see the track record).</p></details>
+      <details><summary>What about garbage time?</summary><p>It was tested. Discounting blowout snaps made rankings less stable and didn't fix a single eye-test problem, because on a per-play basis garbage time cuts both ways: soft prevent coverage, but also desperate throws into it. Crunch time gets the small 1.25 weight instead.</p></details>
+      <details><summary>Why did a QB's rating move during his bye week?</summary><p>His opponents kept playing. As the season goes on, the ratings of the defenses he faced get sharper, and his schedule adjustment moves with them.</p></details>
+      <details><summary>Who counts as qualified?</summary><p>At least 14 dropbacks per team game, the same bar the NFL uses for passer rating attempts. Part-time QBs are still rated; switch on "Include part-time QBs" to see them.</p></details>
+      <details><summary>Where does the data come from, and when does it update?</summary><p>Play-by-play from nflverse (nflfastR), which includes the expected-points model. The site rebuilds itself automatically on Monday, Tuesday and Friday mornings during the season, so Sunday, Monday and Thursday games are in by the time you read it.</p></details>
+    </div>
+  </section>
+
+  <footer class="site-foot">
+    <p id="updated"></p>
+    <p>Data: <a href="https://github.com/nflverse/nflverse-data">nflverse</a> play-by-play and rosters, with the nflfastR expected points model. Formula and code: <a href="https://github.com/devz0r/QBrankings">github.com/devz0r/QBrankings</a>.</p>
+  </footer>
+</main>
+<!-- /bundle:body -->
+<script src="app.js"></script>
+</body>
+</html>

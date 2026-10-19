@@ -1,0 +1,382 @@
+{
+ "seasons_tested": [
+  2016,
+  2025
+ ],
+ "metrics": [
+  {
+   "key": "cqr",
+   "label": "CQR",
+   "split_half": 0.493,
+   "year_to_year": 0.363,
+   "win_pct": 0.718
+  },
+  {
+   "key": "rating",
+   "label": "Passer rating",
+   "split_half": 0.413,
+   "year_to_year": 0.339,
+   "win_pct": 0.632
+  },
+  {
+   "key": "anya",
+   "label": "ANY/A",
+   "split_half": 0.445,
+   "year_to_year": 0.356,
+   "win_pct": 0.667
+  },
+  {
+   "key": "epa",
+   "label": "EPA per play",
+   "split_half": 0.466,
+   "year_to_year": 0.351,
+   "win_pct": 0.721
+  },
+  {
+   "key": "qbr",
+   "label": "ESPN Total QBR",
+   "split_half": 0.505,
+   "year_to_year": 0.287,
+   "win_pct": 0.664
+  }
+ ],
+ "sanity_check": {
+  "pairs": 852,
+  "out_of_order": [
+   {
+    "season": 2020,
+    "better_box": "Mitchell Trubisky",
+    "ranked_higher": "Joe Burrow",
+    "gap": 9.2
+   },
+   {
+    "season": 2021,
+    "better_box": "Kirk Cousins",
+    "ranked_higher": "Jimmy Garoppolo",
+    "gap": 4.4
+   }
+  ]
+ },
+ "seasons": [
+  {
+   "season": 2016,
+   "top": [
+    {
+     "name": "Matt Ryan",
+     "team": "ATL",
+     "cqr": 92.9
+    },
+    {
+     "name": "Tom Brady",
+     "team": "NE",
+     "cqr": 91.8
+    },
+    {
+     "name": "Dak Prescott",
+     "team": "DAL",
+     "cqr": 88.6
+    },
+    {
+     "name": "Aaron Rodgers",
+     "team": "GB",
+     "cqr": 83.6
+    },
+    {
+     "name": "Kirk Cousins",
+     "team": "WAS",
+     "cqr": 80.8
+    }
+   ],
+   "mvp": "Matt Ryan",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2017,
+   "top": [
+    {
+     "name": "Carson Wentz",
+     "team": "PHI",
+     "cqr": 87.6
+    },
+    {
+     "name": "Tom Brady",
+     "team": "NE",
+     "cqr": 86.0
+    },
+    {
+     "name": "Drew Brees",
+     "team": "NO",
+     "cqr": 85.4
+    },
+    {
+     "name": "Alex Smith",
+     "team": "KC",
+     "cqr": 84.4
+    },
+    {
+     "name": "Deshaun Watson",
+     "team": "HOU",
+     "cqr": 84.4
+    }
+   ],
+   "mvp": "Tom Brady",
+   "mvp_rank": 2
+  },
+  {
+   "season": 2018,
+   "top": [
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 94.3
+    },
+    {
+     "name": "Drew Brees",
+     "team": "NO",
+     "cqr": 92.6
+    },
+    {
+     "name": "Philip Rivers",
+     "team": "LAC",
+     "cqr": 84.2
+    },
+    {
+     "name": "Jared Goff",
+     "team": "LA",
+     "cqr": 79.3
+    },
+    {
+     "name": "Matt Ryan",
+     "team": "ATL",
+     "cqr": 79.2
+    }
+   ],
+   "mvp": "Patrick Mahomes",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2019,
+   "top": [
+    {
+     "name": "Lamar Jackson",
+     "team": "BAL",
+     "cqr": 97.0
+    },
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 92.3
+    },
+    {
+     "name": "Drew Brees",
+     "team": "NO",
+     "cqr": 89.5
+    },
+    {
+     "name": "Ryan Tannehill",
+     "team": "TEN",
+     "cqr": 88.4
+    },
+    {
+     "name": "Dak Prescott",
+     "team": "DAL",
+     "cqr": 88.2
+    }
+   ],
+   "mvp": "Lamar Jackson",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2020,
+   "top": [
+    {
+     "name": "Aaron Rodgers",
+     "team": "GB",
+     "cqr": 91.7
+    },
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 89.9
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 88.1
+    },
+    {
+     "name": "Ryan Tannehill",
+     "team": "TEN",
+     "cqr": 85.1
+    },
+    {
+     "name": "Deshaun Watson",
+     "team": "HOU",
+     "cqr": 81.0
+    }
+   ],
+   "mvp": "Aaron Rodgers",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2021,
+   "top": [
+    {
+     "name": "Aaron Rodgers",
+     "team": "GB",
+     "cqr": 88.5
+    },
+    {
+     "name": "Tom Brady",
+     "team": "TB",
+     "cqr": 86.7
+    },
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 81.3
+    },
+    {
+     "name": "Matthew Stafford",
+     "team": "LA",
+     "cqr": 80.9
+    },
+    {
+     "name": "Justin Herbert",
+     "team": "LAC",
+     "cqr": 80.0
+    }
+   ],
+   "mvp": "Aaron Rodgers",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2022,
+   "top": [
+    {
+     "name": "Patrick Mahomes",
+     "team": "KC",
+     "cqr": 92.0
+    },
+    {
+     "name": "Tua Tagovailoa",
+     "team": "MIA",
+     "cqr": 88.7
+    },
+    {
+     "name": "Jalen Hurts",
+     "team": "PHI",
+     "cqr": 86.4
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 84.8
+    },
+    {
+     "name": "Jimmy Garoppolo",
+     "team": "SF",
+     "cqr": 80.5
+    }
+   ],
+   "mvp": "Patrick Mahomes",
+   "mvp_rank": 1
+  },
+  {
+   "season": 2023,
+   "top": [
+    {
+     "name": "Brock Purdy",
+     "team": "SF",
+     "cqr": 94.3
+    },
+    {
+     "name": "Dak Prescott",
+     "team": "DAL",
+     "cqr": 87.0
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 85.9
+    },
+    {
+     "name": "Tua Tagovailoa",
+     "team": "MIA",
+     "cqr": 81.5
+    },
+    {
+     "name": "Lamar Jackson",
+     "team": "BAL",
+     "cqr": 79.6
+    }
+   ],
+   "mvp": "Lamar Jackson",
+   "mvp_rank": 5
+  },
+  {
+   "season": 2024,
+   "top": [
+    {
+     "name": "Lamar Jackson",
+     "team": "BAL",
+     "cqr": 96.2
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 92.0
+    },
+    {
+     "name": "Jared Goff",
+     "team": "DET",
+     "cqr": 86.7
+    },
+    {
+     "name": "Jordan Love",
+     "team": "GB",
+     "cqr": 80.2
+    },
+    {
+     "name": "Joe Burrow",
+     "team": "CIN",
+     "cqr": 79.1
+    }
+   ],
+   "mvp": "Josh Allen",
+   "mvp_rank": 2
+  },
+  {
+   "season": 2025,
+   "top": [
+    {
+     "name": "Drake Maye",
+     "team": "NE",
+     "cqr": 90.2
+    },
+    {
+     "name": "Matthew Stafford",
+     "team": "LA",
+     "cqr": 89.3
+    },
+    {
+     "name": "Jordan Love",
+     "team": "GB",
+     "cqr": 84.9
+    },
+    {
+     "name": "Brock Purdy",
+     "team": "SF",
+     "cqr": 82.5
+    },
+    {
+     "name": "Josh Allen",
+     "team": "BUF",
+     "cqr": 81.0
+    }
+   ],
+   "mvp": null,
+   "mvp_rank": null
+  }
+ ]
+}

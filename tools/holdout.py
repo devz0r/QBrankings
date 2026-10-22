@@ -2,6 +2,7 @@
 
     python tools/holdout.py CACHE_DIR tune OUT.json POINTS_WEIGHT   # one slice of the tuning grid
     python tools/holdout.py CACHE_DIR test '<frozen config json>' OUT.json
+    python tools/holdout.py CACHE_DIR compare '{"name": <config json>, ...}' OUT.json   # QB-clustered bootstrap
 
 Objective (fixed before running): mean of split-half, year-to-year and win correlations on 2016-2020,
 minus the clear-cut-pair violation rate.
@@ -15,7 +16,7 @@ from qbrank.data import load_pbp, load_roster
 from qbrank.stats import box
 CACHE = sys.argv[1]
 MODE = sys.argv[2]           # 'tune' or 'test'
-DEFAULT = dict(POINTS_WEIGHT=0.5, CLUTCH_WEIGHT=1.25, YAC_RECEIVER_SHARE=0.25, DPI_SHARE=0.5, ARM_PUNT_FREE=False)
+DEFAULT = dict(POINTS_WEIGHT=0.5, CLUTCH_WEIGHT=1.25, YAC_RECEIVER_SHARE=0.25, DPI_SHARE=0.5, ARM_PUNT_MODE='off')
 qbr_week, qbr_season = V._qbr(CACHE)
 RAW = {}
 def raw(season):
@@ -66,7 +67,7 @@ def stats(frames, k, idx=None):
 
 if MODE == 'tune':
     grid = dict(POINTS_WEIGHT=[float(sys.argv[4])], CLUTCH_WEIGHT=[1.0, 1.25], YAC_RECEIVER_SHARE=[0.0, 0.25, 0.5],
-                DPI_SHARE=[0.5, 1.0], ARM_PUNT_FREE=[False, True])
+                DPI_SHARE=[0.5, 1.0], ARM_PUNT_MODE=['off', 'cliff'])
     out = []
     for combo in itertools.product(*grid.values()):
         cfg = dict(zip(grid, combo))
@@ -76,6 +77,44 @@ if MODE == 'tune':
         out.append({**cfg, 'split': round(s, 4), 'yoy': round(y, 4), 'win': round(w, 4), 'viol': viol, 'pairs': pairs, 'obj': round(obj, 4)})
         print(json.dumps(out[-1]), flush=True)
     json.dump(out, open(sys.argv[3], 'w'), indent=1)
+elif MODE == 'compare':
+    # python tools/holdout.py CACHE compare '{"name": {config}, ...}' OUT.json
+    # Scores each config on 2016-2020 (objective) and 2021-2025, with a QB-clustered paired bootstrap:
+    # each resample draws whole quarterbacks, so a QB appearing in several seasons counts as one unit.
+    cfgs = json.loads(sys.argv[3])
+    rng = np.random.default_rng(7)
+    keys = ['cqr', 'epa', 'anya', 'rating', 'qbr']
+    report = {}
+    for name, c in cfgs.items():
+        tf, tp, tv = evaluate(range(2016, 2021), c)
+        ts = stats(tf, 'cqr')
+        frames, _, _ = evaluate(range(2020, 2026), c)
+        frames = frames[1:]
+        _, p, v = evaluate(range(2021, 2026), c)
+        ids = sorted(set().union(*[set(j.index) | set(f.index) | (set(y.index) if y is not None else set()) for j, f, y in frames]))
+        pos = [tuple({q: np.where(d.index == q)[0] for q in set(d.index)} if d is not None else None for d in fr) for fr in frames]
+        def draw():
+            pick = rng.choice(ids, len(ids), replace=True)
+            out = []
+            for (pj, pf, py) in pos:
+                take = lambda m: np.concatenate([m[q] for q in pick if q in m] or [np.array([], dtype=int)])
+                out.append((take(pj), take(pf), take(py) if py is not None else None))
+            return out
+        point = {k: stats(frames, k) for k in keys}
+        boots = []
+        for b in range(1000):
+            idx = draw()
+            boots.append({k: stats(frames, k, idx) for k in keys})
+        rep = {'tune_2016_2020': {'split': round(ts[0], 3), 'yoy': round(ts[1], 3), 'win': round(ts[2], 3),
+                                  'objective': round((sum(ts) / 3) - tv / max(tp, 1), 4)},
+               'test_pairs': p, 'test_out_of_order': v,
+               'point': {k: [round(float(x), 3) for x in point[k]] for k in keys}, 'diff_ci': {}}
+        for k in keys[1:]:
+            d = np.array([[bb['cqr'][i] - bb[k][i] for i in range(3)] for bb in boots])
+            rep['diff_ci'][k] = [[round(float(np.nanpercentile(d[:, i], 2.5)), 3), round(float(np.nanpercentile(d[:, i], 97.5)), 3)] for i in range(3)]
+        report[name] = rep
+        print(name, json.dumps(rep), flush=True)
+    json.dump(report, open(sys.argv[4], 'w'), indent=1)
 else:
     cfg = json.loads(sys.argv[3])
     rng = np.random.default_rng(7)

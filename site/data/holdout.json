@@ -1,4 +1,5 @@
 {
+ "formula_version": "1.1",
  "tuned_on": [
   2016,
   2020
@@ -7,20 +8,20 @@
   2021,
   2025
  ],
+ "bootstrap": "Paired bootstrap, 1,000 resamples of whole quarterbacks (a QB who appears in several seasons is one unit), 95% intervals on CQR minus each other rating.",
  "config": {
   "points_weight": "1/3",
   "clutch_weight": 1.25,
-  "yac_receiver_share": 0.0,
   "dpi_share": 0.5,
-  "arm_punt_free": true
+  "arm_punt": "sliding scale"
  },
  "metrics": [
   {
    "key": "cqr",
    "label": "CQR",
-   "split_half": 0.555,
-   "year_to_year": 0.389,
-   "win_pct": 0.756,
+   "split_half": 0.554,
+   "year_to_year": 0.391,
+   "win_pct": 0.758,
    "diff_ci": null
   },
   {
@@ -31,16 +32,16 @@
    "win_pct": 0.77,
    "diff_ci": [
     [
-     -0.045,
-     0.1
+     -0.041,
+     0.101
     ],
     [
-     -0.069,
-     0.063
+     -0.07,
+     0.073
     ],
     [
-     -0.043,
-     0.012
+     -0.039,
+     0.013
     ]
    ]
   },
@@ -52,16 +53,16 @@
    "win_pct": 0.7,
    "diff_ci": [
     [
-     -0.12,
-     0.052
+     -0.117,
+     0.048
     ],
     [
-     -0.08,
-     0.151
+     -0.096,
+     0.162
     ],
     [
-     0.001,
-     0.122
+     0.003,
+     0.123
     ]
    ]
   },
@@ -73,16 +74,16 @@
    "win_pct": 0.709,
    "diff_ci": [
     [
-     0.019,
-     0.139
+     0.007,
+     0.142
     ],
     [
-     -0.007,
-     0.137
+     -0.024,
+     0.162
     ],
     [
-     0.016,
-     0.077
+     0.013,
+     0.082
     ]
    ]
   },
@@ -94,23 +95,52 @@
    "win_pct": 0.653,
    "diff_ci": [
     [
-     0.118,
-     0.303
+     0.115,
+     0.317
     ],
     [
-     -0.019,
-     0.217
+     -0.033,
+     0.228
     ],
     [
-     0.043,
-     0.158
+     0.042,
+     0.168
     ]
    ]
   }
  ],
- "original_formula": {
-  "split_half": 0.553,
-  "year_to_year": 0.39,
-  "win_pct": 0.766
+ "variants": {
+  "smooth": {
+   "tune_objective": 0.4835,
+   "test": {
+    "split_half": 0.554,
+    "year_to_year": 0.391,
+    "win_pct": 0.758
+   }
+  },
+  "cliff": {
+   "tune_objective": 0.4842,
+   "test": {
+    "split_half": 0.555,
+    "year_to_year": 0.389,
+    "win_pct": 0.756
+   }
+  },
+  "no_waiver": {
+   "tune_objective": 0.4792,
+   "test": {
+    "split_half": 0.551,
+    "year_to_year": 0.387,
+    "win_pct": 0.761
+   }
+  },
+  "smooth_no_clutch": {
+   "tune_objective": 0.4795,
+   "test": {
+    "split_half": 0.558,
+    "year_to_year": 0.391,
+    "win_pct": 0.749
+   }
+  }
  }
 }

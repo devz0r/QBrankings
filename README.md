@@ -20,8 +20,9 @@ EPA* = EPA
        × ½                   on pass interference drawn
 
 AY   = pass yds + rush yds − sack yds + 20 × TD − 45 × INT − 45 × p per fumble
-       (no INT charge on end-of-half heaves or on 3rd/4th-and-10+ throws of 20+ air yards,
-        which work like punts; EPA still charges what they actually cost)
+       (no INT charge on end-of-half heaves; on 3rd/4th down the charge is scaled down for deep
+        "arm punts": waived × ramp(yards to go, 5→15) × ramp(air yards, 10→30). EPA still charges
+        what those plays actually cost.)
 ```
 
 * **avg** is the league average for a dropback, or for an NFL run in the same situation (short yardage or
@@ -68,9 +69,9 @@ The code is the spec: [`qbrank/formula.py`](qbrank/formula.py).
 | Expected points (EPA) | Knows that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12, and what a turnover or sack does to the drive. |
 | Adjusted yards (AY) | Keeps the rating anchored to production fans can see, and is steadier than EPA. ⅓ / ⅔ was the best blend on 2016-2020. |
 | Fumbles at their average cost | Putting the ball on the ground is the QB's fault; who recovers it is close to a coin flip. |
-| Arm-punt interceptions | A deep pick on 3rd-and-15 is roughly a punt; EPA prices it that way and the yards side no longer double-charges it. |
+| Arm-punt interceptions | A deep pick on 3rd-and-15 is roughly a punt; EPA prices it that way, so the yards side scales its charge down smoothly instead of double-charging it. (A sliding scale replaced an all-or-nothing cutoff that swung a play's value by 3.3 points over one air yard; it tested the same.) |
 | Designed runs against an average NFL run | Credits dual threats for what their runs add over a normal run play, without penalizing pocket passers. |
-| 1.25× late and close | Crunch time matters, but a handful of snaps shouldn't decide a season. Kept because it tested slightly better than 1.0. |
+| 1.25× late and close | A judgment call the data only mildly supports: it improved the 2016-2020 fit and the link to winning on 2021-2025, and cost a little week-to-week consistency. CQR is an average, so fewer crunch-time snaps never lowers a score. |
 | Defense adjustment | 300 yards against the best pass defense isn't 300 yards against the worst. |
 | 100-dropback cushion | Small samples are noisy; this keeps a backup's great half from topping the list. |
 
@@ -87,23 +88,40 @@ scored on 2021-2025. Paired bootstrap 95% intervals on the difference (CQR minus
 
 | Rating | Split-half | Year to year | Correlation with win % |
 |---|---|---|---|
-| **CQR** | 0.555 | 0.389 | 0.756 |
-| EPA per play | 0.529 (tie) | 0.392 (tie) | 0.770 (tie) |
-| ESPN Total QBR | 0.589 (tie) | 0.352 (tie) | 0.700 (CQR ahead) |
-| ANY/A | 0.484 (CQR ahead) | 0.339 (tie) | 0.709 (CQR ahead) |
-| Passer rating | 0.348 (CQR ahead) | 0.315 (tie) | 0.653 (CQR ahead) |
+| **CQR v1.1** | 0.554 | 0.391 | 0.758 |
+| EPA per play | 0.529 (n.s.) | 0.392 (n.s.) | 0.770 (n.s.) |
+| ESPN Total QBR | 0.589 (n.s.) | 0.352 (n.s.) | 0.700 (CQR ahead, narrowly) |
+| ANY/A | 0.484 (CQR ahead) | 0.339 (n.s.) | 0.709 (CQR ahead) |
+| Passer rating | 0.348 (CQR ahead) | 0.315 (n.s.) | 0.653 (CQR ahead) |
+
+n.s. = no significant difference detected, which is not the same as proven equal. Intervals come from a
+paired bootstrap that resamples whole quarterbacks 1,000 times, so a QB who appears in several seasons
+counts as one unit.
+
+Caveat: the weights were fitted on 2016-2020 only, but earlier versions of CQR had been looked at on all of
+2016-2025 while the overall design took shape, so 2021-2025 is not perfectly untouched. The clean test is
+the live check below.
 
 Split-half compares a QB's rating in odd weeks with the same QB's rating in even weeks; year to year
 compares consecutive seasons; the last column correlates with the team's win rate in that QB's starts.
-Honest summary: CQR beats passer rating and ANY/A, is statistically tied with raw EPA, and tracks winning
+Honest summary: CQR beats passer rating and ANY/A, shows no significant difference from raw EPA, and tracks winning
 a little better than Total QBR. Its edge is completeness and transparency, not a leap in accuracy. The
 original 50/50 formula scored the same on these seasons (0.553 / 0.390 / 0.766), so tuning changed little.
 
+### Live check (2026 onward)
+
+CQR v1.1 was frozen on Oct 22, 2026 (`FORMULA_VERSION` in `qbrank/formula.py`). Every weekly build re-scores
+it against EPA per play, ANY/A and passer rating on the current season (odd vs. even weeks, and the first
+half of the weeks played vs. the rest) and shows the result on the site. Weeks 1-6 of 2026 were visible
+while the formula was built; from Week 7 on, the evidence is fully independent. Early-season samples are
+small, so expect these numbers to bounce around until late in the year. The plan is to leave the formula
+alone unless this check shows a real problem.
+
 ### Eye test (2016-2025)
 
-* The AP MVP ranked first or second in CQR in 8 of 9 seasons (2016-2024). The exception is Lamar Jackson in
-  2023 (6th, essentially tied with Jared Goff and C.J. Stroud; Purdy, Prescott, Allen and Tagovailoa were
-  more efficient per play).
+* The AP MVP ranked in CQR's top three in 8 of 9 seasons (2016-2024), and first or second in 7. Tom Brady in
+  2017 was 3rd, 0.2 behind Carson Wentz and 1.1 behind Drew Brees. Lamar Jackson in 2023 was 5th, behind
+  Purdy, Prescott, Allen and Tagovailoa, who were more efficient per play.
 * **Clear-cut pairs:** two qualified QBs in the same season where one is at least as good in passer rating,
   ANY/A, rushing yards per game, TDs per game, giveaways per game and sack rate. There were 852 of them;
   CQR orders 850 correctly. The exceptions: Burrow over Trubisky in 2020 (Trubisky's numbers came against

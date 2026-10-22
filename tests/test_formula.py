@@ -75,14 +75,21 @@ def test_yac_over_expected_share_applies_to_both_halves():
     assert x.adj_yds.iloc[0] == pytest.approx(60.0 - F.YAC_RECEIVER_SHARE * 50.0)
 
 
-def test_third_and_long_deep_interception_costs_no_yards():
+def test_arm_punt_interception_waiver_is_gradual():
     base = dict(complete_pass=0, interception=1, passing_yards=np.nan, yards_after_catch=np.nan,
                 xyac_mean_yardage=np.nan, yac_epa=np.nan, xyac_epa=np.nan, epa=-1.5, qb_epa=-1.5)
-    punt = play(play_id=1, down=3, ydstogo=14, air_yards=35.0, **base)
-    early = play(play_id=2, down=1, ydstogo=10, air_yards=35.0, **base)
-    x = F.select_plays(frame([punt, early]), {'A'})
-    assert x.adj_yds.iloc[0] == pytest.approx(0.0 if F.ARM_PUNT_FREE else -45.0)
-    assert x.adj_yds.iloc[1] == pytest.approx(-45.0)
+    rows = [play(play_id=1, down=3, ydstogo=15, air_yards=30.0, **base),   # full arm punt
+            play(play_id=2, down=1, ydstogo=10, air_yards=35.0, **base),   # early down: full charge
+            play(play_id=3, down=3, ydstogo=10, air_yards=19.0, **base),
+            play(play_id=4, down=3, ydstogo=10, air_yards=20.0, **base)]
+    x = F.select_plays(frame(rows), {'A'}).set_index('play_id')
+    if F.ARM_PUNT_MODE != 'smooth':
+        pytest.skip('sliding scale disabled')
+    assert x.adj_yds[1] == pytest.approx(0.0)
+    assert x.adj_yds[2] == pytest.approx(-45.0)
+    # no cliff: one extra air yard changes the charge by about a yard, not 45
+    assert abs(x.adj_yds[4] - x.adj_yds[3]) < 2
+    assert x.adj_yds[4] == pytest.approx(-45.0 * (1 - 0.5 * 0.5))
 
 
 def test_run_heavy_gadget_qb_is_not_divided_by_a_handful_of_dropbacks():

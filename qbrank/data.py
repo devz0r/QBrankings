@@ -20,7 +20,7 @@ def _download(url: str, dest: str, max_age_hours: float) -> str:
     if os.path.exists(dest) and (time.time() - os.path.getmtime(dest)) < max_age_hours * 3600:
         return dest
     os.makedirs(os.path.dirname(dest) or '.', exist_ok=True)
-    tmp = dest + '.part'
+    tmp = f'{dest}.{os.getpid()}.part'
     for attempt in range(4):
         try:
             with urllib.request.urlopen(url, timeout=120) as resp, open(tmp, 'wb') as fh:

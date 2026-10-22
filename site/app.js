@@ -514,7 +514,7 @@
     const mark = (m, i) => {
       if (!m.diff_ci) return null;
       const [lo, hi] = m.diff_ci[i];
-      const t = lo > 0 ? ['▲', 'CQR ahead'] : hi < 0 ? ['▼', 'CQR behind'] : ['=', 'too close to call'];
+      const t = lo > 0 ? ['▲', 'CQR ahead'] : hi < 0 ? ['▼', 'CQR behind'] : ['=', 'no significant difference'];
       return el('span', { title: `CQR minus ${m.label}: ${lo.toFixed(3)} to ${hi.toFixed(3)} (95% CI). ${t[1]}`, style: 'color:var(--muted);margin-left:4px', text: t[0] });
     };
     const cell = (m, k, i) => el('td', {}, m[k].toFixed(3), mark(m, i),
@@ -524,7 +524,22 @@
       el('tbody', {}, h.metrics.map((m) => el('tr', { class: m.key === 'cqr' ? 'us' : null },
         el('td', { class: 'left', text: m.label }), ...keys.map((k, i) => cell(m, k, i))))));
     document.getElementById('bench-verdict').textContent =
-      'The honest summary: CQR beats passer rating and ANY/A within a season and on winning, is statistically tied with raw EPA per play everywhere, and tracks winning a little better than Total QBR, which is slightly (not significantly) more consistent within a season. No year-to-year gap is significant. CQR\'s edge is completeness and transparency, not a leap in accuracy.';
+      'The honest summary: CQR beats passer rating and ANY/A within a season and on winning. Against raw EPA per play no significant difference was detected in any column, and against Total QBR only the link to winning is (narrowly) significant. No year-to-year gap is significant. CQR\'s edge is completeness and transparency, not a leap in accuracy. ' + (h.bootstrap || '');
+  }
+
+  function renderLive(d) {
+    const box = document.getElementById('live-table'), note = document.getElementById('live-note');
+    const lc = d.live_check;
+    if (!lc) { box.replaceChildren(); note.textContent = 'The live check starts once four weeks have been played.'; return; }
+    const current = d.season === state.index.current;
+    note.textContent = current
+      ? `CQR v${lc.version} was frozen on Oct 22, 2026. Each weekly rebuild re-scores it on ${d.season} so far: odd weeks vs. even weeks, and the first ${lc.early_through_week} weeks vs. the rest (${lc.qbs_split} and ${lc.qbs_early_late} QBs). Weeks 1-6 of 2026 were visible while the formula was built, so the check becomes fully independent as later weeks pile up. Early-season samples are small and noisy.`
+      : `The same check on ${d.season}. That season was used while designing CQR, so it is not an independent test.`;
+    const fmt = (v) => (v == null ? '–' : v.toFixed(3));
+    box.replaceChildren(
+      el('thead', {}, el('tr', {}, el('th', { class: 'left', text: 'Rating' }), el('th', { text: 'Odd vs. even weeks' }), el('th', { text: 'Early vs. late' }))),
+      el('tbody', {}, lc.metrics.map((m) => el('tr', { class: m.key === 'cqr' ? 'us' : null },
+        el('td', { class: 'left', text: m.label }), el('td', { text: fmt(m.split_half) }), el('td', { text: fmt(m.early_vs_late) })))));
   }
 
   async function loadSeason(season) {
@@ -535,6 +550,7 @@
       state.season = season;
       state.open.clear();
       renderSeason();
+      renderLive(state.data);
     } catch (err) {
       body.replaceChildren(el('tr', {}, el('td', { class: 'empty', colspan: COLS.length, text: err.message })));
     } finally {

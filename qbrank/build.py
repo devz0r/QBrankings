@@ -19,6 +19,7 @@ from . import formula as F
 from .data import load_pbp, load_roster
 from .stats import box
 from . import talent as T
+from .live import live_check
 
 FIRST_SEASON = 2016
 MIN_DROPBACK_SHARE = 0.5
@@ -206,6 +207,8 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
         'qualify_dropbacks_per_team_game': F.QUALIFY_DROPBACKS_PER_TEAM_GAME,
         'baselines': {k: {'points': round(v[0], 3), 'adj_yards': round(v[1], 2)} for k, v in base.items()},
         'sanity_check': audit,
+        'formula_version': F.FORMULA_VERSION,
+        'live_check': live_check(x, weeks),
         'qbs': qbs,
     }
     _write_if_changed(os.path.join(out_dir, f'{season}.json'), payload)

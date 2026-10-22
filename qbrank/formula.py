@@ -16,7 +16,7 @@ Overview
        interference at half value.
      * Yards:   adjusted yards, an all-plays version of ANY/A - passing and
        rushing yards, minus sack yards, +20 per TD, -45 per interception
-       (not on end-of-half heaves or 3rd/4th-and-long deep "arm punts"),
+       (not on end-of-half heaves, and scaled down for 3rd/4th-and-long deep "arm punts"),
        -45 per expected lost fumble. Nine adjusted yards = one point.
    Each play is compared with the league average for the same kind of play
    (an average dropback, or an average NFL run in the same situation).
@@ -33,6 +33,8 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+
+FORMULA_VERSION = '1.1'     # frozen 2026-10-22; changes after this are tracked against the live check
 
 # ---------------------------------------------------------------------------
 # Constants (calibrated on 2016-2025 regular seasons; see README)
@@ -52,9 +54,12 @@ FUMBLE_LOST_RATE = {'sack': 0.52, 'dropback': 0.19, 'run': 0.41, 'snap': 0.26}
 SHORT_YARDAGE = 2           # designed runs with <= 2 yards to go use the short-yardage baseline
 HEAVE_SECONDS = 8           # end-of-half heave: <= 8 s left in the half ...
 HEAVE_AIR_YARDS = 30        # ... thrown 30+ yards; an interception there costs no yards
-ARM_PUNT_FREE = True        # if True: 3rd/4th-and-long deep interceptions cost no yards either (EPA still charges them)
-ARM_PUNT_TO_GO = 10
-ARM_PUNT_AIR_YARDS = 20
+# Arm punts: a deep interception on 3rd/4th-and-long works like a punt, so its yards-side charge is waived
+# on a sliding scale (EPA still charges what the play actually cost). The waiver grows from 0 at 5 yards to go
+# to full at 15, times 0 at 10 air yards to full at 30. ARM_PUNT_MODE 'cliff' is the old all-or-nothing rule.
+ARM_PUNT_MODE = 'smooth'
+ARM_PUNT_TO_GO = (5, 15)
+ARM_PUNT_AIR_YARDS = (10, 30)
 MIN_DENOM_SHARE = 0.75      # denominator is at least 75% of all weighted plays, so run-heavy gadget QBs
                             # can't divide a pile of rushing value by a handful of dropbacks
 DEFENSE_PRIOR_DROPBACKS = 800.0
@@ -136,11 +141,17 @@ def select_plays(pbp: pd.DataFrame, qb_ids) -> pd.DataFrame:
     td = ((_flag(x, 'pass_touchdown') | _flag(x, 'rush_touchdown')) & (x.td_team == x.posteam) & ~x.two_pt)
     intercepted = _flag(x, 'interception')
     heave = intercepted & (x.half_seconds_remaining <= HEAVE_SECONDS) & (x.air_yards.fillna(0) >= HEAVE_AIR_YARDS)
-    if ARM_PUNT_FREE:
-        heave = heave | (intercepted & (x.down.fillna(0) >= 3) & (x.ydstogo.fillna(0) >= ARM_PUNT_TO_GO)
-                         & (x.air_yards.fillna(0) >= ARM_PUNT_AIR_YARDS))
+    late_down = intercepted & (x.down.fillna(0) >= 3)
+    if ARM_PUNT_MODE == 'cliff':
+        waiver = (late_down & (x.ydstogo.fillna(0) >= 10) & (x.air_yards.fillna(0) >= 20)).astype(float)
+    elif ARM_PUNT_MODE == 'smooth':
+        ramp = lambda v, lo, hi: ((v.fillna(0) - lo) / (hi - lo)).clip(0, 1)
+        waiver = late_down * ramp(x.ydstogo, *ARM_PUNT_TO_GO) * ramp(x.air_yards, *ARM_PUNT_AIR_YARDS)
+    else:
+        waiver = pd.Series(0.0, index=x.index)
+    int_charge = np.where(heave, 0.0, 1.0 - waiver.values)
     adj = (pass_yds - YAC_RECEIVER_SHARE * yac_over_exp_y + rush_yds + sack_yds + dpi_yds
-           + TD_BONUS_YARDS * td - INT_COST_YARDS * (intercepted & ~heave) - FUMBLE_COST_YARDS * p_lost)
+           + TD_BONUS_YARDS * td - INT_COST_YARDS * intercepted * int_charge - FUMBLE_COST_YARDS * p_lost)
     # two-point tries: +/-10 yards so the yards side agrees with the points side
     x['adj_yds'] = np.where(x.two_pt, np.where(base > 0, 10.0, -10.0), adj)
     x['td'] = td

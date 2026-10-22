@@ -111,10 +111,12 @@ A  = ⅓ × (<span class="hl">EPA*</span> − avg) + ⅔ × (<span class="hl">AY
 <span class="cm">// p:   how often that kind of fumble is lost league-wide</span>
 
 <span class="cm">// 2. weight crunch time, adjust for defenses, add a cushion</span>
-              Σ w×A − Σ w×D
-V  = ──────────────────────────────    w = 1.25 in 4th qtr / OT
-     max(dropbacks, ¾ × plays) + 100        within 8, else 1
-                                       D = defense faced
+                  Σ w×A − Σ w×D
+V  = ───────────────────────────────────────
+     max(Σ w dropbacks, ¾ × Σ w plays) + 100
+
+     w = 1.25 in 4th qtr / OT within 8, else 1
+     D = rating of the defense faced
 
 <span class="cm">// 3. 0-100 scale, 50 = league average</span>
 CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
@@ -142,7 +144,7 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
         <li><h3>Value it in points and in yards</h3><p>Expected points know that 4 yards on 3rd-and-3 beats 9 yards on 3rd-and-12. Adjusted yards know what the box score knows. Each catches the other's blind spots, so CQR blends them: one third points, two thirds yards, the mix that tested best on 2016-2020. Nine adjusted yards count as one point.</p></li>
         <li><h3>Take out what clearly isn't the QB's doing</h3><p>Fumbles are charged at their average cost, because who falls on the ball is luck. Drawn pass interference counts half, teammates' penalties are ignored, and a deep interception on 3rd-and-long, which works like a punt, has its yards charge scaled down: none at 5 yards to go or 10 air yards, all of it waived at 15 to go and 30 air yards, sliding smoothly in between. Expected points still charge what the play actually cost. Protection, drops and play design can't be separated cleanly with public data, so they remain part of the rating.</p></li>
         <li><h3>Compare each play with an average play of its kind</h3><p>Dropbacks are measured against the league's average dropback. Designed runs are measured against the league's average run in the same situation (short yardage or not), and they add to the QB's total without diluting the passing rate. That is how CQR counts dual threats. To keep it fair, the denominator never drops below three quarters of all the QB's plays, and players who mostly run (gadget QBs) aren't listed.</p></li>
-        <li><h3>Weight crunch time a little</h3><p>Plays in the 4th quarter or overtime of a one-score game count 1.25 times. This is a judgment call the data only mildly supports: it improved the 2016-2020 fit and the link to winning on 2021-2025, and cost a little week-to-week consistency. Because CQR is an average, not a total, a QB with fewer crunch-time snaps isn't penalized.</p></li>
+        <li><h3>Weight crunch time a little</h3><p>Plays in the 4th quarter or overtime of a one-score game count 1.25 times, on both the value and the dropback count, so CQR stays a weighted average. That is a deliberate choice: late, close plays get extra influence, so two QBs with the same overall efficiency can score differently depending on when they produced it. Having few crunch-time snaps doesn't lower a score by itself. The data only mildly supports this: it improved the 2016-2020 fit and the link to winning on 2021-2025, and cost a little week-to-week consistency.</p></li>
         <li><h3>Adjust for the defenses faced</h3><p>Each defense is rated by what it allows to other teams' quarterbacks, regressed heavily toward average early in the year, and the QB is credited or charged for the defenses on the schedule.</p></li>
         <li><h3>Make it earn the sample</h3><p>Every QB starts with 100 dropbacks of league-average play. One hot game can't vault a backup to No. 1. The cushion still matters: at 300 dropbacks it pulls a rating 25% of the way toward average, and about 14% by the end of a full season. Then the per-dropback value goes on a 0-100 curve where 50 is league average and 90-plus is an MVP-level season.</p></li>
       </ol>
@@ -153,7 +155,7 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
     <div class="section-head">
       <p class="eyebrow">Does it pass the eye test?</p>
       <h2 id="track-title">Track record, 2016 to 2025</h2>
-      <p>Checked three ways: whether it agrees with seasons everyone remembers, whether it ever puts a clearly worse stat line ahead of a clearly better one, and, on seasons the formula never saw while it was being tuned, whether it measures something stable about the quarterback rather than noise.</p>
+      <p>Checked three ways: whether it agrees with seasons everyone remembers, whether it ever puts a clearly worse stat line ahead of a clearly better one, and, on held-out seasons not used to fit the weights, whether it measures something stable about the quarterback rather than noise.</p>
     </div>
     <div class="cols">
       <div class="card">
@@ -172,8 +174,8 @@ CQR = 100 ÷ (1 + e^(−V ÷ 0.085))</pre>
           <div class="table-scroll"><table class="bench" id="live-table"></table></div>
         </div>
         <div class="card">
-          <h3>Against other QB ratings, on unseen seasons</h3>
-          <p>CQR's weights were chosen using 2016-2020 only, then frozen and scored on 2021-2025. Higher is better. Split-half: odd weeks vs. even weeks of the same season. Year to year: one season vs. the next. Wins: correlation with the team's win rate in the QB's starts. ▲ means CQR is ahead with 95% confidence, ▼ behind, = no significant difference detected (which is not the same as proven equal).</p>
+          <h3>Against other QB ratings, on held-out seasons</h3>
+          <p>CQR's weights were chosen using 2016-2020 only, then frozen and scored on 2021-2025. Those later seasons aren't perfectly untouched: earlier versions of CQR were looked at on them while the design took shape. The live check above is the clean test. Higher is better. Split-half: odd weeks vs. even weeks of the same season. Year to year: one season vs. the next. Wins: correlation with the team's win rate in the QB's starts. ▲ means CQR is ahead with 95% confidence, ▼ behind, = no significant difference detected (which is not the same as proven equal).</p>
           <div class="table-scroll"><table class="bench" id="bench-table"></table></div>
           <p id="bench-verdict" style="margin-top:10px"></p>
         </div>

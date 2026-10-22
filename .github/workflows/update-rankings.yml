@@ -68,6 +68,14 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
 
+      - name: Stamp asset versions
+        # so browsers never pair a new page with a cached old script or stylesheet
+        if: github.event_name != 'pull_request'
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i "s|href=\"style.css\"|href=\"style.css?v=$v\"|; s|src=\"app.js\"|src=\"app.js?v=$v\"|" site/index.html
+          grep -q "app.js?v=$v" site/index.html
+
       - name: Package site
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3

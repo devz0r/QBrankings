@@ -35,9 +35,9 @@ AY   = pass yds + rush yds − sack yds + 20 × TD − 45 × INT − 45 × p per
 Then:
 
 ```
-              Σ w×A − Σ w×D
-V  = ──────────────────────────────     w = 1.25 in the 4th quarter / OT within 8 points, else 1
-     max(dropbacks, ¾ × plays) + 100    D = rating of the defense faced (per dropback)
+                  Σ w×A − Σ w×D
+V  = ───────────────────────────────────────    w = 1.25 in the 4th quarter / OT within 8 points, else 1
+     max(Σ w dropbacks, ¾ × Σ w plays) + 100    D = rating of the defense faced (per dropback)
 
 CQR = 100 ÷ (1 + e^(−V ÷ 0.085))
 ```
@@ -71,7 +71,7 @@ The code is the spec: [`qbrank/formula.py`](qbrank/formula.py).
 | Fumbles at their average cost | Putting the ball on the ground is the QB's fault; who recovers it is close to a coin flip. |
 | Arm-punt interceptions | A deep pick on 3rd-and-15 is roughly a punt; EPA prices it that way, so the yards side scales its charge down smoothly instead of double-charging it. (A sliding scale replaced an all-or-nothing cutoff that swung a play's value by 3.3 points over one air yard; it tested the same.) |
 | Designed runs against an average NFL run | Credits dual threats for what their runs add over a normal run play, without penalizing pocket passers. |
-| 1.25× late and close | A judgment call the data only mildly supports: it improved the 2016-2020 fit and the link to winning on 2021-2025, and cost a little week-to-week consistency. CQR is an average, so fewer crunch-time snaps never lowers a score. |
+| 1.25× late and close | Applied to both the value and the dropback count, so CQR stays a weighted average, but late, close plays deliberately get extra influence: two QBs with the same overall efficiency can score differently depending on when they produced it. A judgment call the data only mildly supports: it improved the 2016-2020 fit and the link to winning on 2021-2025, and cost a little week-to-week consistency. |
 | Defense adjustment | 300 yards against the best pass defense isn't 300 yards against the worst. |
 | 100-dropback cushion | Small samples are noisy; this keeps a backup's great half from topping the list. |
 
@@ -162,7 +162,7 @@ three past seasons. Correlation with each QB's rest-of-season CQR:
 | 10 | 0.51 | 0.49 | 0.40 |
 | 14 | 0.47 | 0.45 | 0.40 |
 
-Leaning on more history looked better on the seasons used for fitting but not on unseen ones, so the
+Leaning on more history looked better on the seasons used for fitting but not on the held-out ones, so the
 simpler, current-season-first version costs essentially nothing. Wins, Pro Bowls, PFF grades and
 reputation are deliberately left out: they can't be checked against outcomes or mostly measure the team.
 

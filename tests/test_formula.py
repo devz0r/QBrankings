@@ -169,13 +169,21 @@ def test_league_average_qb_is_fifty():
 def test_talent_blends_season_history_and_prior(tmp_path):
     import json
     from qbrank import talent as T
-    json.dump({'qbs': [{'id': 'A', 'value_raw': 0.2, 'denom': 600.0}]}, open(tmp_path / '2025.json', 'w'))
-    roster = pd.DataFrame({'gsis_id': ['A', 'R'], 'rookie_year': [2020, 2026], 'entry_year': [2020, 2026], 'draft_number': [10, 5]})
-    cur = pd.DataFrame({'value_raw': [-0.1, 0.1], 'denom': [200.0, 200.0]}, index=['A', 'R'])
+    json.dump({'qbs': [{'id': 'A', 'value_raw': 0.2, 'denom': 600.0}, {'id': 'Y', 'value_raw': 0.0, 'denom': 500.0}]},
+              open(tmp_path / '2025.json', 'w'))
+    roster = pd.DataFrame({'gsis_id': ['A', 'R', 'Y'], 'rookie_year': [2016, 2026, 2024],
+                           'entry_year': [2016, 2026, 2024], 'draft_number': [10, 5, 1]})
+    cur = pd.DataFrame({'value_raw': [-0.1, 0.1, 0.1], 'denom': [200.0, 200.0, 200.0]}, index=['A', 'R', 'Y'])
     t = T.estimate(cur, 2026, roster, str(tmp_path))
-    hist_w = T.HISTORY_WEIGHT * 600
-    expect = (200 * -0.1 + hist_w * 0.2 + T.REGRESS_DROPBACKS * T.PRIOR['vet']) / (200 + hist_w + T.REGRESS_DROPBACKS)
+    h = T.HISTORY_WEIGHT * (1 - 200 / T.FADE_DROPBACKS) * 600
+    expect = (200 * -0.1 + h * 0.2 + T.REGRESS_DROPBACKS * T.PRIOR['vet']) / (200 + h + T.REGRESS_DROPBACKS)
     assert t.at['A', 'value'] == pytest.approx(expect)
+    assert t.at['A', 'share_season'] > 0.6          # this season leads five games in
     # a first-round rookie with no history regresses toward the rookie starting point
     assert t.at['R', 'value'] == pytest.approx((200 * 0.1 + T.REGRESS_DROPBACKS * T.PRIOR['first_round_rookie']) / (200 + T.REGRESS_DROPBACKS))
-    assert t.at['A', 'share_season'] + t.at['A', 'share_history'] < 1
+    # a third-year QB gets the young-QB bump on last season's value
+    hy = T.HISTORY_WEIGHT * (1 - 200 / T.FADE_DROPBACKS) * 500
+    assert t.at['Y', 'value'] == pytest.approx((200 * 0.1 + hy * T.YOUNG_BONUS + T.REGRESS_DROPBACKS * T.PRIOR['vet']) / (200 + hy + T.REGRESS_DROPBACKS))
+    # history fades away by a full season of dropbacks
+    late = T.estimate(pd.DataFrame({'value_raw': [-0.1], 'denom': [600.0]}, index=['A']), 2026, roster, str(tmp_path))
+    assert late.at['A', 'share_history'] == 0

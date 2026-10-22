@@ -442,11 +442,12 @@
       const [ta, tb, tc] = tq;
       document.getElementById('lede').textContent = ta ? `${ta.name} ${done && d.through_week >= 17 ? 'finished as' : 'is'} the best quarterback ${done && d.through_week >= 17 ? `of ${d.season}` : 'right now'}` : 'Best quarterbacks';
       document.getElementById('lede-sub').textContent = (tb && tc ? `${tb.name} and ${tc.name} are next. ` : '') +
-        "This ranking blends this season's CQR with the last three seasons to estimate how well each QB will play from here on. Early in the year, past seasons carry most of the weight.";
+        "This power ranking leans on this season's CQR and steadies it with last season. Last season's weight fades as the year goes on and is gone by about Week 17.";
       document.getElementById('board-note').textContent =
-        "Best-QB rating = (this season's value × dropbacks + 0.75 × past seasons' value × dropbacks, each older season at half weight, + 200 dropbacks at a starting point) ÷ total weight, on the same 0-100 curve as CQR. " +
-        'Starting points: veterans and first-round rookies a little below average, other rookies well below. Weights were fitted on 2018-2021 and tested on 2022-2025, where the estimate predicted the rest of a season better than CQR alone at every week (correlation 0.51 vs. 0.36 after Week 6). ' +
-        "Ranked: QBs with at least 150 weighted dropbacks of evidence. S-numbers show this season's CQR rank.";
+        "Best-QB rating = (this season's value × dropbacks + h × last season's value × dropbacks + 50 dropbacks at a starting point) ÷ total weight, on the same 0-100 curve as CQR. " +
+        "h starts at 0.2 and fades to zero by 600 dropbacks this season, so about five games in this season is roughly 60% of the rating. QBs in their 2nd-4th seasons get +0.06 on last season's value, because young QBs tend to improve. " +
+        'Tested on 2022-2025 (not used for fitting), it predicts the rest of a season about as well as a version weighted toward three past seasons, and better from midseason on. ' +
+        "Ranked: QBs with at least 150 dropbacks this season and last. S-numbers show this season's CQR rank.";
       state.compMax = Math.max(4, ...qual.flatMap((x) => Object.values(x.components).map(Math.abs)));
       document.getElementById('updated').textContent =
         `Data through ${dateText(d.last_game_date)} (${d.games_played} games). Rebuilt ${dateText(d.generated_at)}.`;

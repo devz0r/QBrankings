@@ -23,7 +23,7 @@
 
   const state = {
     index: null, season: null, data: null, validation: null,
-    sort: { key: 'cqr', dir: -1 }, query: '', showAll: false, open: new Set(), mode: 'season',
+    sort: { key: 'cqr', dir: -1 }, query: '', showAll: false, open: new Set(), mode: 'season', view: 'list',
   };
 
   // ---------- helpers ----------
@@ -174,6 +174,49 @@
       if (typeof va === 'string') return va.localeCompare(vb) * state.sort.dir;
       return ((va ?? -1e9) - (vb ?? -1e9)) * state.sort.dir || (b.cqr - a.cqr);
     });
+  }
+
+  // Tiers are fixed score bands on the 0-100 scale (50 = league average), so a tier means the same
+  // thing every week and every season, and a tier can be empty.
+  const TIER_BANDS = [
+    ['S', 85, 'MVP level', '#f24b26', '#fff'], ['A', 75, 'Elite', '#ffa62b', '#1b1b1b'],
+    ['B', 62, 'Very good', '#ffcc2e', '#1b1b1b'], ['C', 50, 'Above average', '#17ad5c', '#fff'],
+    ['D', 38, 'Below average', '#0d97ff', '#fff'], ['E', 25, 'Poor', '#9a4dff', '#fff'],
+    ['F', -1, 'Struggling', '#ff47f0', '#1b1b1b'],
+  ];
+
+  function renderTiers() {
+    const box = document.getElementById('tiers');
+    const q = state.query.trim().toLowerCase();
+    const list = state.data.qbs.filter((x) => (state.showAll || isRanked(x))
+      && (!q || x.name.toLowerCase().includes(q) || x.teams.some((t) => t.toLowerCase() === q)))
+      .sort((a, b) => score(b) - score(a));
+    const label = talentMode() ? 'Best-QB rating' : 'CQR';
+    box.replaceChildren(...TIER_BANDS.map(([t, min, name, bg, fg], i) => {
+      const max = i ? TIER_BANDS[i - 1][1] : 100;
+      const members = list.filter((x) => score(x) >= min && score(x) < (i ? max : 101));
+      return el('div', { class: 'tier-row' },
+        el('div', { class: 'tier-label', style: `background:${bg};color:${fg}` },
+          el('span', { class: 'tier-letter', text: t }),
+          el('span', { class: 'tier-range', text: i === 0 ? `${min}+` : min < 0 ? `under ${max}` : `${min}-${max}` })),
+        el('div', { class: 'tier-cells', 'aria-label': `${t} tier, ${name}` },
+          members.length ? members.map((x) => el('button', { type: 'button', class: 'tier-qb' + (isRanked(x) ? '' : ' unq'),
+            title: `${x.name}: ${label} ${fmt1(score(x))}${rankOf(x) ? `, ${ordinal(rankOf(x))}` : ''}. Open in rankings`,
+            onclick: () => { state.view = 'list'; syncViews(); state.open.add(x.id); renderView();
+              requestAnimationFrame(() => document.querySelector('#board-body tr[aria-expanded="true"]')?.scrollIntoView({ block: 'center' })); } },
+            teamChip(x.team), el('span', { class: 'tier-name', text: x.name }), el('span', { class: 'tier-score', text: fmt1(score(x)) })))
+            : el('span', { class: 'tier-empty', text: `Nobody at ${name.toLowerCase()} level right now` })));
+    }));
+  }
+
+  function syncViews() {
+    document.querySelectorAll('.views button').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.view === state.view)));
+    document.getElementById('tiers').hidden = state.view !== 'tiers';
+    document.getElementById('board-card').hidden = state.view === 'tiers';
+  }
+
+  function renderView() {
+    if (state.view === 'tiers') renderTiers(); else renderBoard();
   }
 
   function renderBoard() {
@@ -408,7 +451,7 @@
       document.getElementById('updated').textContent =
         `Data through ${dateText(d.last_game_date)} (${d.games_played} games). Rebuilt ${dateText(d.generated_at)}.`;
       renderHead();
-      renderBoard();
+      renderView();
       return;
     }
     const [a, b, c] = qual;
@@ -430,7 +473,7 @@
     document.getElementById('updated').textContent =
       `Data through ${dateText(d.last_game_date)} (${d.games_played} games). Rebuilt ${dateText(d.generated_at)}.`;
     renderHead();
-    renderBoard();
+    renderView();
   }
 
   function renderTrack(v) {
@@ -502,17 +545,22 @@
     window.addEventListener('resize', syncDetailWidth);
     state.showAll = recall('showAll', false);
     state.mode = recall('mode', 'season') === 'talent' ? 'talent' : 'season';
-    const modeButtons = document.querySelectorAll('.modes button');
+    const modeButtons = document.querySelectorAll('.modes button[data-mode]');
     const syncModes = () => modeButtons.forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode)));
     syncModes();
+    state.view = recall('view', 'list') === 'tiers' ? 'tiers' : 'list';
+    syncViews();
+    document.querySelectorAll('.views button').forEach((btn) => btn.addEventListener('click', () => {
+      state.view = btn.dataset.view; store('view', state.view); syncViews(); if (state.data) renderView();
+    }));
     modeButtons.forEach((btn) => btn.addEventListener('click', () => {
       state.mode = btn.dataset.mode; store('mode', state.mode); syncModes(); state.open.clear();
       if (state.data) renderSeason();
     }));
     const toggleAll = document.getElementById('show-all');
     toggleAll.checked = state.showAll;
-    toggleAll.addEventListener('change', () => { state.showAll = toggleAll.checked; store('showAll', state.showAll); renderBoard(); });
-    document.getElementById('search').addEventListener('input', (e) => { state.query = e.target.value; renderBoard(); });
+    toggleAll.addEventListener('change', () => { state.showAll = toggleAll.checked; store('showAll', state.showAll); renderView(); });
+    document.getElementById('search').addEventListener('input', (e) => { state.query = e.target.value; renderView(); });
     try {
       state.index = await getJSON('index');
     } catch (err) {

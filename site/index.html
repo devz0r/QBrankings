@@ -55,6 +55,10 @@
       <button type="button" data-mode="season" aria-pressed="true">This season (CQR)</button>
       <button type="button" data-mode="talent" aria-pressed="false">Best QBs right now</button>
     </div>
+    <div class="modes views" role="group" aria-label="View">
+      <button type="button" data-view="list" aria-pressed="true">Rankings</button>
+      <button type="button" data-view="tiers" aria-pressed="false">Tier list</button>
+    </div>
 
     <div class="key" aria-hidden="true">
       <span class="key-item"><span class="key-line"></span>League average (CQR 50), drawn as the line to gain</span>
@@ -63,7 +67,8 @@
       <span class="key-item">Value columns are points per game versus an average QB</span>
     </div>
 
-    <div class="board-card">
+    <div class="tiers" id="tiers" hidden></div>
+    <div class="board-card" id="board-card">
       <div class="table-scroll">
         <table class="board" id="board" aria-describedby="board-note">
           <thead>

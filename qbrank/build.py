@@ -18,6 +18,7 @@ import pandas as pd
 from . import formula as F
 from .data import load_pbp, load_roster
 from .stats import box
+from . import talent as T
 
 FIRST_SEASON = 2016
 MIN_DROPBACK_SHARE = 0.5
@@ -147,6 +148,9 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
         if len(weeks) > 1 and w == weeks[-2]:
             prev_rank = rw['rank'].dropna().astype(int).to_dict()
 
+    cur = pd.DataFrame({'value_raw': (r.total / r.denom).where(r.denom > 0), 'denom': r.denom})
+    tal = T.estimate(cur, season, roster, out_dir)
+
     gscore = F.rate(q, prior=F.GAME_PRIOR_DROPBACKS, by=('qb', 'game_id'))
     gbox = box(q, by=('qb', 'game_id'))
     sbox = box(q)
@@ -169,6 +173,12 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
             'qualified': bool(row.qualified),
             'cqr': _score(row.cqr),
             'per_dropback': _round(row.per_dropback, 3),
+            'value_raw': _round(row.total / row.denom, 4) if row.denom > 0 else None,
+            'denom': _round(row.denom, 1),
+            'talent': {'cqr': _score(tal.at[qb, 'cqr']), 'rank': None,
+                       'evidence': _round(tal.at[qb, 'evidence'], 0),
+                       'share_season': _round(tal.at[qb, 'share_season'], 3),
+                       'share_history': _round(tal.at[qb, 'share_history'], 3)},
             'games': games,
             'dropbacks': int(row.dropbacks),
             'plays': int(row.plays),
@@ -178,6 +188,10 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
             'history': history.get(qb, []),
             'games_log': _game_rows(qb, q, meta, gscore, gbox),
         })
+
+    ranked = sorted((e for e in qbs if e['talent']['evidence'] >= T.MIN_EVIDENCE), key=lambda e: -e['talent']['cqr'])
+    for i, entry in enumerate(ranked, 1):
+        entry['talent']['rank'] = i
 
     base = F.baselines(x)
     audit = sanity_check(r, sbox)

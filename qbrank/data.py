@@ -13,7 +13,7 @@ from .formula import PBP_COLUMNS
 RELEASES = 'https://github.com/nflverse/nflverse-data/releases/download'
 PBP_URL = RELEASES + '/pbp/play_by_play_{season}.csv.gz'
 ROSTER_URL = RELEASES + '/rosters/roster_{season}.csv'
-ROSTER_COLUMNS = ['season', 'team', 'position', 'full_name', 'gsis_id', 'jersey_number']
+ROSTER_COLUMNS = ['season', 'team', 'position', 'full_name', 'gsis_id', 'jersey_number', 'birth_date', 'draft_number', 'rookie_year', 'entry_year']
 
 
 def _download(url: str, dest: str, max_age_hours: float) -> str:

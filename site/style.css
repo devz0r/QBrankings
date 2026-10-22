@@ -144,6 +144,20 @@ input[type="search"] { width: 220px; max-width: 100%; }
 .toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; text-transform: none; letter-spacing: 0; font-size: var(--fs-sm); color: var(--ink-2); min-height: 36px; }
 .toggle input { width: 16px; height: 16px; accent-color: var(--ink); }
 
+.modes { display: inline-flex; margin-top: 22px; border: 1px solid var(--line-strong); border-radius: 9px; padding: 3px; background: var(--surface); gap: 2px; max-width: 100%; }
+.modes button {
+  font: inherit; font-size: var(--fs-sm); font-weight: 650; color: var(--ink-2); background: transparent; border: 0;
+  border-radius: 6px; padding: 8px 14px; cursor: pointer; min-height: 36px;
+}
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.modes button:hover:not([aria-pressed="true"]) { background: var(--surface-2); }
+.basis { display: flex; flex-direction: column; gap: 3px; align-items: stretch; width: 80px; }
+.basis-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.basis-bar i { display: block; height: 100%; }
+.b-season { background: var(--ink); }
+.b-hist { background: var(--dot); }
+.basis-text { font-size: 0.6875rem; color: var(--muted); text-align: left; }
+.talent-line { border-top: 1px solid var(--line); padding-top: 10px; }
 .key { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-top: 20px; font-size: var(--fs-sm); color: var(--ink-2); }
 .key-item { display: inline-flex; align-items: center; gap: 8px; }
 .key-swatch { width: 18px; height: 8px; border-radius: 2px; }
@@ -311,6 +325,8 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
   .board th:first-child, .board td:first-child { padding-left: 10px; }
   .bar-cell { width: 84px; min-width: 72px; }
   .spark, .mv { display: none; }
+  .modes { display: flex; }
+  .modes button { flex: 1; padding: 8px 8px; }
   .brand-name { display: none; }
   .qb { min-width: 0; white-space: normal !important; }
   .score { width: 46px; font-size: 1.1rem; }

@@ -23,7 +23,7 @@
 
   const state = {
     index: null, season: null, data: null, validation: null,
-    sort: { key: 'cqr', dir: -1 }, query: '', showAll: false, open: new Set(),
+    sort: { key: 'cqr', dir: -1 }, query: '', showAll: false, open: new Set(), mode: 'season',
   };
 
   // ---------- helpers ----------
@@ -74,15 +74,21 @@
     return res.json();
   }
 
+  // ---------- mode: this season's CQR, or the best-QB (talent) estimate ----------
+  const talentMode = () => state.mode === 'talent';
+  const score = (q) => (talentMode() ? q.talent.cqr : q.cqr);
+  const rankOf = (q) => (talentMode() ? q.talent.rank : q.rank);
+  const isRanked = (q) => (talentMode() ? q.talent.rank != null : q.qualified);
+
   // ---------- columns ----------
   const box = (k) => (q) => q.box[k];
   const COLS = [
-    { key: 'rank', label: 'Rk', cls: 'rk', get: (q) => q.rank ?? 999, cell: (q) => (q.rank ?? '–'), title: 'Rank among qualified QBs' },
+    { key: 'rank', label: 'Rk', cls: 'rk', get: (q) => rankOf(q) ?? 999, cell: (q) => (rankOf(q) ?? '–'), title: 'Rank' },
     { key: 'move', label: '±', cls: 'mv', sortable: false, cell: moveCell, title: 'Change since last week' },
     { key: 'name', label: 'Quarterback', cls: 'qb', get: (q) => q.name, cell: qbCell },
-    { key: 'cqr', label: 'CQR', cls: 'score', get: (q) => q.cqr, cell: (q) => fmt1(q.cqr) },
+    { key: 'cqr', label: () => (talentMode() ? 'Rating' : 'CQR'), cls: 'score', get: score, cell: (q) => fmt1(score(q)) },
     { key: 'bar', label: 'vs. average', cls: 'bar-cell left', sortable: false, cell: barCell },
-    { key: 'trend', label: 'Trend', cls: 'spark', sortable: false, cell: sparkCell, title: 'Season-to-date CQR, week by week' },
+    { key: 'trend', label: () => (talentMode() ? 'Based on' : 'Trend'), cls: 'spark', sortable: false, cell: sparkCell, title: 'Season-to-date CQR week by week, or what the best-QB rating is based on' },
     { key: 'ppg', label: 'Total', cls: 'num col-comp sep', get: (q) => q.pts_per_game, cell: (q) => signed(q.pts_per_game), title: 'Points per game added vs. an average QB' },
     { key: 'passing', label: 'Pass', cls: 'num col-comp', get: (q) => q.components.passing, cell: (q) => signed(q.components.passing) },
     { key: 'rushing', label: 'Rush', cls: 'num col-comp', get: (q) => q.components.rushing, cell: (q) => signed(q.components.rushing) },
@@ -100,6 +106,7 @@
   ];
 
   function moveCell(q) {
+    if (talentMode()) return el('span', { class: 'mv flat', text: q.rank ? `S${q.rank}` : '', title: q.rank ? `${ordinal(q.rank)} in this season's CQR` : '' });
     if (q.rank == null || q.prev_rank == null) return el('span', { class: 'mv flat', text: '' });
     const d = q.prev_rank - q.rank;
     if (d === 0) return el('span', { class: 'mv flat', text: '–', title: 'No change' });
@@ -112,15 +119,23 @@
       el('span', { class: 'qb-meta' }, teams.map(teamChip), `${q.games} G · ${q.dropbacks} DB`)];
   }
   function barCell(q) {
-    const v = Math.max(0, Math.min(100, q.cqr));
+    const v = Math.max(0, Math.min(100, score(q)));
     const good = v >= 50;
     const left = good ? 50 : v;
     const width = Math.abs(v - 50);
-    return el('div', { class: 'bar', role: 'img', 'aria-label': `CQR ${fmt1(q.cqr)}, ${good ? 'above' : 'below'} league average` },
+    return el('div', { class: 'bar', role: 'img', 'aria-label': `${fmt1(v)}, ${good ? 'above' : 'below'} league average` },
       el('span', { class: 'fill ' + (good ? 'good' : 'bad'), style: `left:${left}%;width:${width}%` }),
       el('span', { class: 'avg' }));
   }
+  function basisCell(q) {
+    const t = q.talent, seasonPct = Math.round(t.share_season * 100), histPct = Math.round(t.share_history * 100);
+    return el('div', { class: 'basis', title: `${seasonPct}% this season, ${histPct}% past seasons, ${100 - seasonPct - histPct}% starting point` },
+      el('span', { class: 'basis-bar' },
+        el('i', { class: 'b-season', style: `width:${seasonPct}%` }), el('i', { class: 'b-hist', style: `width:${histPct}%` })),
+      el('span', { class: 'basis-text', text: `${seasonPct}% this yr` }));
+  }
   function sparkCell(q) {
+    if (talentMode()) return basisCell(q);
     const h = q.history.filter((p) => p.cqr != null);
     if (h.length < 2) return '';
     const W = 88, H = 26, weeks = state.data.weeks, w0 = weeks[0], w1 = weeks[weeks.length - 1];
@@ -141,8 +156,9 @@
       const sortable = c.sortable !== false;
       const th = el('th', { class: c.cls, scope: 'col', title: c.title,
         'aria-sort': sortable && state.sort.key === c.key ? (state.sort.dir < 0 ? 'descending' : 'ascending') : null });
-      if (!sortable) { th.textContent = c.label; return th; }
-      th.append(el('button', { type: 'button', text: c.label, onclick: () => {
+      const label = typeof c.label === 'function' ? c.label() : c.label;
+      if (!sortable) { th.textContent = label; return th; }
+      th.append(el('button', { type: 'button', text: label, onclick: () => {
         if (state.sort.key === c.key) state.sort.dir *= -1;
         else state.sort = { key: c.key, dir: ['name', 'rank'].includes(c.key) ? 1 : -1 };
         renderHead(); renderBoard();
@@ -165,12 +181,12 @@
     const q = state.query.trim().toLowerCase();
     const match = (x) => !q || x.name.toLowerCase().includes(q) || x.teams.some((t) => t.toLowerCase() === q) || x.team.toLowerCase().startsWith(q);
     const all = state.data.qbs.filter(match);
-    const qual = sorted(all.filter((x) => x.qualified));
-    const part = sorted(all.filter((x) => !x.qualified));
+    const qual = sorted(all.filter(isRanked));
+    const part = sorted(all.filter((x) => !isRanked(x)));
     const rows = [];
     const add = (x) => {
       const open = state.open.has(x.id);
-      const tr = el('tr', { class: 'row' + (x.qualified ? '' : ' unq'), tabindex: 0, 'aria-expanded': open ? 'true' : 'false',
+      const tr = el('tr', { class: 'row' + (isRanked(x) ? '' : ' unq'), tabindex: 0, 'aria-expanded': open ? 'true' : 'false',
         onclick: () => toggle(x.id), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(x.id); } } },
       COLS.map((c) => el('td', { class: c.cls }, c.cell(x))));
       rows.push(tr);
@@ -179,7 +195,7 @@
     qual.forEach(add);
     if (state.showAll && part.length) {
       rows.push(el('tr', { class: 'section-row' }, el('td', { colspan: COLS.length,
-        text: `Part-time QBs: fewer than ${state.data.qualify_dropbacks_per_team_game} dropbacks per team game` })));
+        text: talentMode() ? 'Not enough evidence yet (this season plus the last three)' : `Part-time QBs: fewer than ${state.data.qualify_dropbacks_per_team_game} dropbacks per team game` })));
       part.forEach(add);
     }
     if (!rows.length) rows.push(el('tr', {}, el('td', { class: 'empty', colspan: COLS.length, text: 'No quarterbacks match that search.' })));
@@ -227,6 +243,10 @@
       el('div', { class: 'big', text: fmt1(q.cqr) }),
       el('div', { class: 'big-sub', text: `${tierOf(q.cqr)} · ${q.per_dropback >= 0 ? '+' : '−'}${Math.abs(q.per_dropback).toFixed(3)} points per dropback` }),
       el('p', { class: 'summary', text: parts.join(' ') }),
+      el('p', { class: 'summary talent-line' }, el('strong', { text: `Best-QB rating ${fmt1(q.talent.cqr)}` }),
+        q.talent.rank ? ` (${ordinal(q.talent.rank)})` : '',
+        `: ${Math.round(q.talent.share_season * 100)}% this season, ${Math.round(q.talent.share_history * 100)}% past seasons, ` +
+        `${100 - Math.round(q.talent.share_season * 100) - Math.round(q.talent.share_history * 100)}% starting point.`),
       el('dl', { class: 'facts' },
         el('dt', { text: 'Completion %' }), el('dd', { text: b.cmp_pct == null ? '–' : `${fmt1(b.cmp_pct)}%` }),
         el('dt', { text: 'Yards per attempt' }), el('dd', { text: b.ypa == null ? '–' : b.ypa.toFixed(1) }),
@@ -374,6 +394,23 @@
     const done = !isCurrent || d.through_week >= 18;
     document.getElementById('season-label').textContent =
       `${d.season} regular season · ${done && d.through_week >= 17 ? 'final' : `through Week ${d.through_week}`}`;
+    if (talentMode()) {
+      const tq = d.qbs.filter((x) => x.talent.rank != null).sort((p, r) => p.talent.rank - r.talent.rank);
+      const [ta, tb, tc] = tq;
+      document.getElementById('lede').textContent = ta ? `${ta.name} ${done && d.through_week >= 17 ? 'finished as' : 'is'} the best quarterback ${done && d.through_week >= 17 ? `of ${d.season}` : 'right now'}` : 'Best quarterbacks';
+      document.getElementById('lede-sub').textContent = (tb && tc ? `${tb.name} and ${tc.name} are next. ` : '') +
+        "This ranking blends this season's CQR with the last three seasons to estimate how well each QB will play from here on. Early in the year, past seasons carry most of the weight.";
+      document.getElementById('board-note').textContent =
+        "Best-QB rating = (this season's value × dropbacks + 0.75 × past seasons' value × dropbacks, each older season at half weight, + 200 dropbacks at a starting point) ÷ total weight, on the same 0-100 curve as CQR. " +
+        'Starting points: veterans and first-round rookies a little below average, other rookies well below. Weights were fitted on 2018-2021 and tested on 2022-2025, where the estimate predicted the rest of a season better than CQR alone at every week (correlation 0.51 vs. 0.36 after Week 6). ' +
+        "Ranked: QBs with at least 150 weighted dropbacks of evidence. S-numbers show this season's CQR rank.";
+      state.compMax = Math.max(4, ...qual.flatMap((x) => Object.values(x.components).map(Math.abs)));
+      document.getElementById('updated').textContent =
+        `Data through ${dateText(d.last_game_date)} (${d.games_played} games). Rebuilt ${dateText(d.generated_at)}.`;
+      renderHead();
+      renderBoard();
+      return;
+    }
     const [a, b, c] = qual;
     document.getElementById('lede').textContent = a ? `${a.name} ${done && d.through_week >= 17 ? 'led' : 'leads'} the NFL in CQR` : 'Quarterback rankings';
     let sub = b && c ? `${b.name} and ${c.name} round out the top three` : '';
@@ -464,6 +501,14 @@
   async function init() {
     window.addEventListener('resize', syncDetailWidth);
     state.showAll = recall('showAll', false);
+    state.mode = recall('mode', 'season') === 'talent' ? 'talent' : 'season';
+    const modeButtons = document.querySelectorAll('.modes button');
+    const syncModes = () => modeButtons.forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.mode === state.mode)));
+    syncModes();
+    modeButtons.forEach((btn) => btn.addEventListener('click', () => {
+      state.mode = btn.dataset.mode; store('mode', state.mode); syncModes(); state.open.clear();
+      if (state.data) renderSeason();
+    }));
     const toggleAll = document.getElementById('show-all');
     toggleAll.checked = state.showAll;
     toggleAll.addEventListener('change', () => { state.showAll = toggleAll.checked; store('showAll', state.showAll); renderBoard(); });

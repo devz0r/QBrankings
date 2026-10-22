@@ -114,6 +114,38 @@ original 50/50 formula scored the same on these seasons (0.553 / 0.390 / 0.766),
 
 Reproduce with `python -m qbrank.validate` and `tools/holdout.py`.
 
+## Best QBs right now (talent estimate)
+
+CQR answers "who has played best this season?" and only uses this season's plays. The site's second view,
+**Best QBs right now**, answers "who is the best quarterback?": an estimate of how each QB will play from
+here on, built from CQR ([`qbrank/talent.py`](qbrank/talent.py)):
+
+```
+          n × V  +  0.75 × Σ 0.5^(k−1) × n_k × V_k  +  200 × μ
+    T  =  ───────────────────────────────────────────────────────      then the same 0-100 curve as CQR
+          n      +  0.75 × Σ 0.5^(k−1) × n_k          +  200
+```
+
+* **V, n**: this season's CQR value per dropback (before the 100-dropback cushion) and its dropbacks.
+* **V_k, n_k**: the same for 1-3 seasons ago, each older season at half weight.
+* **μ**: the starting point for anyone with little history: veterans −0.07, first-round rookies −0.06,
+  other rookies −0.18.
+
+The weights were fitted on 2018-2021 to predict each QB's rest-of-season CQR from the first N weeks plus
+history, then tested on 2022-2025 (`tools/talent_fit.py`):
+
+| After week | Talent estimate | CQR alone | Last season alone |
+|---|---|---|---|
+| 0 (preseason) | 0.45 | – | 0.28 |
+| 2 | 0.46 | 0.25 | 0.26 |
+| 6 | 0.51 | 0.36 | 0.30 |
+| 10 | 0.49 | 0.40 | 0.30 |
+| 14 | 0.45 | 0.40 | 0.24 |
+
+(Correlation with rest-of-season CQR.) It also has lower error than CQR alone through Week 12, about
+equal after. No age adjustment improved the fit, so there isn't one. Wins, Pro Bowls, PFF grades and
+reputation are deliberately left out: they can't be checked against outcomes or mostly measure the team.
+
 ## Running it
 
 ```bash

@@ -211,8 +211,8 @@ def rate(q: pd.DataFrame, prior: float = QB_PRIOR_DROPBACKS, by=('qb',)) -> pd.D
     for name, kinds in COMPONENTS.items():
         out[name] = q[q.kind.isin(kinds)].groupby(by).w_value.sum().reindex(out.index).fillna(0.0)
     out['total'] = out.value + out.schedule
-    denom = np.maximum(out.w_dropbacks, MIN_DENOM_SHARE * out.w_plays) + prior
-    out['per_dropback'] = (out.total / denom).replace([np.inf, -np.inf], np.nan)
+    out['denom'] = np.maximum(out.w_dropbacks, MIN_DENOM_SHARE * out.w_plays)
+    out['per_dropback'] = (out.total / (out.denom + prior)).replace([np.inf, -np.inf], np.nan)
     out['cqr'] = cqr(out.per_dropback)
     return out
 

@@ -164,3 +164,18 @@ def test_league_average_qb_is_fifty():
             rows.append(play(play_id=pid, id=qb, posteam=team, defteam=opp))
     r, _, _ = F.rate_season(F.select_plays(frame(rows), {'A', 'B'}))
     assert r.cqr.tolist() == pytest.approx([50.0, 50.0], abs=1e-6)
+
+
+def test_talent_blends_season_history_and_prior(tmp_path):
+    import json
+    from qbrank import talent as T
+    json.dump({'qbs': [{'id': 'A', 'value_raw': 0.2, 'denom': 600.0}]}, open(tmp_path / '2025.json', 'w'))
+    roster = pd.DataFrame({'gsis_id': ['A', 'R'], 'rookie_year': [2020, 2026], 'entry_year': [2020, 2026], 'draft_number': [10, 5]})
+    cur = pd.DataFrame({'value_raw': [-0.1, 0.1], 'denom': [200.0, 200.0]}, index=['A', 'R'])
+    t = T.estimate(cur, 2026, roster, str(tmp_path))
+    hist_w = T.HISTORY_WEIGHT * 600
+    expect = (200 * -0.1 + hist_w * 0.2 + T.REGRESS_DROPBACKS * T.PRIOR['vet']) / (200 + hist_w + T.REGRESS_DROPBACKS)
+    assert t.at['A', 'value'] == pytest.approx(expect)
+    # a first-round rookie with no history regresses toward the rookie starting point
+    assert t.at['R', 'value'] == pytest.approx((200 * 0.1 + T.REGRESS_DROPBACKS * T.PRIOR['first_round_rookie']) / (200 + T.REGRESS_DROPBACKS))
+    assert t.at['A', 'share_season'] + t.at['A', 'share_history'] < 1

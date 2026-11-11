@@ -55,6 +55,12 @@ def _team_games(reg: pd.DataFrame) -> pd.Series:
     return pd.concat([g.home_team, g.away_team]).value_counts()
 
 
+def _talent_ranks(tal: pd.DataFrame) -> dict:
+    """Best-QB rank by QB id for everyone with enough evidence."""
+    ok = tal[tal.evidence >= T.MIN_EVIDENCE].sort_values('cqr', ascending=False)
+    return {qb: i for i, qb in enumerate(ok.index, 1)}
+
+
 def _rank(r: pd.DataFrame) -> pd.Series:
     order = r[r.qualified].sort_values('cqr', ascending=False)
     return pd.Series(np.arange(1, len(order) + 1), index=order.index).reindex(r.index)
@@ -141,6 +147,7 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
     # season-to-date ratings as of each week
     history = {}
     prev_rank = {}
+    prev_talent_rank = {}
     for w in weeks:
         rw, _, _ = _ratings(x[x.week <= w], reg[reg.week <= w])
         for qb, row in rw.iterrows():
@@ -148,6 +155,8 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
                                                'rank': None if pd.isna(row['rank']) else int(row['rank'])})
         if len(weeks) > 1 and w == weeks[-2]:
             prev_rank = rw['rank'].dropna().astype(int).to_dict()
+            prev_cur = pd.DataFrame({'value_raw': (rw.total / rw.denom).where(rw.denom > 0), 'denom': rw.denom})
+            prev_talent_rank = _talent_ranks(T.estimate(prev_cur, season, roster, out_dir))
 
     cur = pd.DataFrame({'value_raw': (r.total / r.denom).where(r.denom > 0), 'denom': r.denom})
     tal = T.estimate(cur, season, roster, out_dir)
@@ -176,7 +185,7 @@ def build_season(season: int, cache_dir: str = '.cache', out_dir: str = SITE_DAT
             'per_dropback': _round(row.per_dropback, 3),
             'value_raw': _round(row.total / row.denom, 4) if row.denom > 0 else None,
             'denom': _round(row.denom, 1),
-            'talent': {'cqr': _score(tal.at[qb, 'cqr']), 'rank': None,
+            'talent': {'cqr': _score(tal.at[qb, 'cqr']), 'rank': None, 'prev_rank': prev_talent_rank.get(qb),
                        'evidence': _round(tal.at[qb, 'evidence'], 0),
                        'share_season': _round(tal.at[qb, 'share_season'], 3),
                        'share_history': _round(tal.at[qb, 'share_history'], 3)},

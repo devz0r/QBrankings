@@ -105,18 +105,25 @@
     { key: 'rating', label: 'Rate', cls: 'num col-box', get: box('rating'), cell: (q) => fmt1(q.box.rating), title: 'NFL passer rating' },
   ];
 
+  // Change from last week: green ▲ = moved up N spots, red ▼ = moved down N spots.
+  function movement(q) {
+    const now = rankOf(q), before = talentMode() ? q.talent.prev_rank : q.prev_rank;
+    if (now == null) return null;
+    if (before == null) return { cls: 'new', text: 'NEW', title: 'Not ranked last week' };
+    const d = before - now;
+    if (d === 0) return { cls: 'flat', text: '–', title: `No change from ${ordinal(before)}` };
+    return { cls: d > 0 ? 'up' : 'down', text: (d > 0 ? '▲' : '▼') + Math.abs(d),
+      title: `${d > 0 ? 'Up' : 'Down'} ${Math.abs(d)} from ${ordinal(before)} last week` };
+  }
   function moveCell(q) {
-    if (talentMode()) return el('span', { class: 'mv flat', text: q.rank ? `S${q.rank}` : '', title: q.rank ? `${ordinal(q.rank)} in this season's CQR` : '' });
-    if (q.rank == null || q.prev_rank == null) return el('span', { class: 'mv flat', text: '' });
-    const d = q.prev_rank - q.rank;
-    if (d === 0) return el('span', { class: 'mv flat', text: '–', title: 'No change' });
-    return el('span', { class: 'mv ' + (d > 0 ? 'up' : 'down'), text: (d > 0 ? '▲' : '▼') + Math.abs(d),
-      title: `${d > 0 ? 'Up' : 'Down'} ${Math.abs(d)} from ${ordinal(q.prev_rank)}` });
+    const m = movement(q);
+    return m ? el('span', { class: 'mv ' + m.cls, text: m.text, title: m.title }) : el('span', { class: 'mv flat' });
   }
   function qbCell(q) {
     const teams = q.teams.length > 1 ? q.teams : [q.team];
     return [el('span', { class: 'qb-name', text: q.name }),
-      el('span', { class: 'qb-meta' }, teams.map(teamChip), `${q.games} G · ${q.dropbacks} DB`)];
+      el('span', { class: 'qb-meta' }, teams.map(teamChip),
+        `${talentMode() && q.rank ? `CQR #${q.rank} · ` : ''}${q.games} G · ${q.dropbacks} DB`)];
   }
   function barCell(q) {
     const v = Math.max(0, Math.min(100, score(q)));
@@ -204,7 +211,8 @@
             title: `${x.name}: ${label} ${fmt1(score(x))}${rankOf(x) ? `, ${ordinal(rankOf(x))}` : ''}. Open in rankings`,
             onclick: () => { state.view = 'list'; syncViews(); state.open.add(x.id); renderView();
               requestAnimationFrame(() => document.querySelector('#board-body tr[aria-expanded="true"]')?.scrollIntoView({ block: 'center' })); } },
-            teamChip(x.team), el('span', { class: 'tier-name', text: x.name }), el('span', { class: 'tier-score', text: fmt1(score(x)) })))
+            teamChip(x.team), el('span', { class: 'tier-name', text: x.name }), el('span', { class: 'tier-score', text: fmt1(score(x)) }),
+            (() => { const m = movement(x); return m && m.cls !== 'flat' ? el('span', { class: 'mv ' + m.cls, text: m.text, title: m.title }) : null; })()))
             : el('span', { class: 'tier-empty', text: `Nobody at ${name.toLowerCase()} level right now` })));
     }));
   }
